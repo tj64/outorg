@@ -1,4 +1,3 @@
-#+TITLE:     outorg.el
 #+AUTHOR:    Thorsten Jolitz
 #+EMAIL:     tjolitz <at> gmail <dot> com
 #+DATE:      2013-02-11 Mo
@@ -15,9 +14,7 @@
 #+XSLT:
 
 
-/outorg is reverse Org-Babel/
-
-* Org-style outline navigation and comment editing in source buffers
+* Org-style outline navigation and comment editing
 
 ** Copyright
 
