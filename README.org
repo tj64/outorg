@@ -1,11 +1,11 @@
-#+TITLE:     README
+#+TITLE:     outorg.el
 #+AUTHOR:    Thorsten Jolitz
 #+EMAIL:     tjolitz <at> gmail <dot> com
 #+DATE:      2013-02-11 Mo
 #+DESCRIPTION:
 #+KEYWORDS:
 #+LANGUAGE:  en
-#+OPTIONS:   H:3 num:t toc:t \n:nil @:t ::t |:t ^:nil -:t f:t *:t <:nil
+#+OPTIONS:   H:3 num:nil toc:t \n:nil @:t ::t |:t ^:nil -:t f:t *:t <:nil
 #+OPTIONS:   TeX:t LaTeX:t skip:nil d:nil todo:t pri:nil tags:not-in-toc
 #+INFOJS_OPT: view:nil toc:nil ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
 #+EXPORT_SELECT_TAGS: export
@@ -15,10 +15,9 @@
 #+XSLT:
 
 
-/Outline navigation and Org-mode style comment editing/
-/for Emacs source-code buffers/ 
+/outorg is reverse Org-Babel/
 
-* outorg.el --- Org-style outline navigation and comment editing
+* Org-style outline navigation and comment editing in source buffers
 
 ** Copyright
 
@@ -53,14 +52,12 @@ of major-mode specific functionality.
 
 New features of `outorg' are:
 
-1. Generic functionality that should work whereever `comment-region' and
-`uncomment-region' work. 
-
-2. Fontification of headlines (copied from Fabrice Niessen's
-'.emacs')
-
-3. Toggling between editing in Lisp mode and in Org mode, similar to the
-editing of source-code blocks in Org-mode.
+ 1. Generic functionality that should work whereever `comment-region' and
+    `uncomment-region' work.
+ 2. Fontification of headlines (copied from Fabrice Niessen's
+    '.emacs')
+ 3. Toggling between editing in Lisp mode and in Org mode, similar to the
+    editing of source-code blocks in Org-mode.
 
 It is highly recommended to use `outorg' together with `outline-magic' for
 the Org-style `outline-cycle' command.
@@ -73,12 +70,19 @@ versions or other types of Emacs have be made (yet).
 
 ** Installation
 
-Insert
-;; (require 'outorg)
+Insert 
+
+#+begin_src emacs-lisp
+(require 'outorg)
+#+end_src
+
 in your .emacs file to install.  If you want a different prefix
 key, insert first
 
-;; (defvar outline-minor-mode-prefix "\C-c")
+#+begin_src emacs-lisp
+(defvar outline-minor-mode-prefix "\C-c")
+#+end_src
+
 or whatever.  The prefix can only be changed before outline (minor)
 mode is loaded.
 
@@ -86,7 +90,7 @@ mode is loaded.
 
 | date            | author(s)       | version |
 |-----------------+-----------------+---------|
-| <2013-02-11 Mo> | Thorsten Jolitz |     0.9 |
+| 2013-02-11      | Thorsten Jolitz |     0.9 |
 
 ** Bugs
 
