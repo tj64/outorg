@@ -1,0 +1,28 @@
+* TODO Version 1.1
+
+** TODO announce new version in PicoLisp  mailing-list
+** TODO announce new version in Org-mode mailing-list
+** TODO change version number (comment and const)
+
+
+* TODO Version 1.0
+
+** TODO announce new version in PicoLisp  mailing-list
+** TODO announce new version in Org-mode mailing-list
+** TODO change version number (comment and const)
+
+
+* NEXT Version 0.9
+
+** TODO announce new version in PicoLisp  mailing-list
+** TODO announce new version in Org-mode mailing-list
+** TODO change version number (comment and const)
+** TODO fix menu
+** TODO develop README to Worg article
+** TODO write installation guide (with outline-magic)
+** TODO check keybindings, compare to org
+** TODO fix demote and promote subtree
+** TODO check with different languages (comment-end true, e..g. HTML)
+** TODO check with different languages (comment-end false, e.g. R, Java)
+
+
