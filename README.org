@@ -1,3 +1,4 @@
+#+TITLE:     outorg.el -- reverse org-babel
 #+AUTHOR:    Thorsten Jolitz
 #+EMAIL:     tjolitz <at> gmail <dot> com
 #+DATE:      2013-02-11 Mo
@@ -19,6 +20,7 @@
 ** Copyright
 
 Copyright (C) 2013 Thorsten Jolitz
+
 This file is not (yet) part of GNU Emacs
 
 Author: Thorsten Jolitz  (format "tjolitz%sgmail%s" "@" ".com")
@@ -34,6 +36,43 @@ from Eric Schulte's and Dan Davidson's 'Org-babel'
 
 ** Commentary
 
+*** What is 'outorg'? 
+
+It's a modified extension of 'out-xtra', that is itself an extension to Emacs
+'outline-minor-mode'. Its first goal is to enable full outline-navigation and
+structure editing in source code buffers that are structured by an
+outline-hierarchy with Org-style headlines like
+
+#+begin_src emacs-lisp
+;; * 1st-level Entry
+;; ** 2nd-level Entry
+#+end_src
+
+Its second goal, and new idea, is to take advantage of the fact that these
+kind of headlines look just like out-commented Org-mode headlines (e.g. in
+Emacs Lisp source code buffers). Thus, functionality has been added to enable
+editing of such 'outlined' source-code buffers in a temporary Org-mode buffer
+and insert the modified content back into the original source code buffer.
+
+This is actually the same idea employed in Org-mode (Org-Babel) for
+comfortable editing of source code blocks in Org-mode buffers: a temporary
+buffer is opened and put into the programming language major-mode, the
+source-code block is copied into the temporary buffer, edited (using the
+programming-language major-mode functionality), and the modified content saved
+back to the original Org-mode file. Here, the focus is on the text - an
+Org-mode file can be viewed as text with source-code.
+
+With 'outorg', the focus is on the source code, not on the text. It should be
+used when its about editing (extended) comments in source-code files, i.e.
+when the main editing activity is actually programming, with an occasional
+need to write sections of (comment) text. Just like it is very convenient to
+edit the source code buffers in Org-mode with the full editing power of the
+associated major-mode, its quite an advantage to have the full power of
+Org-mode available when writing the comment sections of your source code
+files.
+
+*** Features
+
 This file provides (almost) the same nice extra features for outline minor
 mode like Per Abrahamsen's 'out-xtra':
 
@@ -43,9 +82,9 @@ mode like Per Abrahamsen's 'out-xtra':
 - Add command to hide all other entries than the one containing point.
 
 `outorg' follows a different idea than `out-xtra': it consists of generic
-functionality that that calculates the adequate outline-regexp and
-outline-level for the active major-mode, rather than defining several blocks
-of major-mode specific functionality.
+functionality that calculates the adequate outline-regexp and outline-level
+for the active major-mode, rather than defining several blocks of major-mode
+specific functionality.
 
 New features of `outorg' are:
 
@@ -53,8 +92,8 @@ New features of `outorg' are:
     `uncomment-region' work.
  2. Fontification of headlines (copied from Fabrice Niessen's
     '.emacs')
- 3. Toggling between editing in Lisp mode and in Org mode, similar to the
-    editing of source-code blocks in Org-mode.
+ 3. Toggling between editing in (e.g.) Lisp mode and in Org mode, similar to
+    the editing of source-code blocks in Org-mode.
 
 It is highly recommended to use `outorg' together with `outline-magic' for
 the Org-style `outline-cycle' command.
@@ -64,6 +103,18 @@ the Org-style `outline-cycle' command.
 `outorg.el' works with [GNU Emacs 24.2.1 (x86_64-unknown-linux-gnu, GTK+
 Version 3.6.4) of 2013-01-20 on eric]. No attempts of testing with older
 versions or other types of Emacs have be made (yet).
+
+** Github repo
+
+You can clone the repo:
+
+#+begin_src shell
+$ git clone git@github.com:tj64/outorg.git
+#+end_src
+
+or just download the source from
+
+https://github.com/tj64/outorg
 
 ** Installation
 
@@ -96,3 +147,5 @@ comment-sections like those produced by `comment-region' (a command that
 comments or uncomments each line in the region). Those special multi-line
 comments found in many programming languages are not recognized and lead to
 undefined behaviour. 
+
+And it's still version 0.9 - work in progress.
