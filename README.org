@@ -45,6 +45,7 @@ outline-hierarchy with Org-style headlines like
 
 #+begin_src emacs-lisp
 ;; * 1st-level Entry
+
 ;; ** 2nd-level Entry
 #+end_src
 
