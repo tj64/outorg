@@ -210,7 +210,7 @@
 ;; *** Outorg hook-functions
 
 (defun outorg-hook-function ()
-  "Add this function to the major-mode hook of your choice"
+  "Add this function to outline-minor-mode-hook"
   (let ((out-regexp (outorg-calc-outline-regexp)))
     (outorg-set-local-outline-regexp-and-level
      out-regexp 'outorg-calc-outline-level)
