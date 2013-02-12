@@ -67,7 +67,7 @@ With 'outorg', the focus is on the source code, not on the text. It should be
 used when its about editing (extended) comments in source-code files, i.e.
 when the main editing activity is actually programming, with an occasional
 need to write sections of (comment) text. Just like it is very convenient to
-edit the source code buffers in Org-mode with the full editing power of the
+edit the source code blocks in Org-mode with the full editing power of the
 associated major-mode, its quite an advantage to have the full power of
 Org-mode available when writing the comment sections of your source code
 files.

@@ -218,6 +218,77 @@
 
 (add-hook 'outline-minor-mode-hook 'outorg-hook-function)
 
+;; ** Commands
+
+;; *** Edit as Org 
+
+(defun outorg-edit-as-org (arg)
+  "Convert and copy to temporary Org buffer
+With ARG, edit the whole buffer, otherwise the current subtree."
+  (interactive "P")
+  (setq outorg-code-buffer-marker (point-marker))
+  (and arg (setq outorg-edit-whole-buffer-p t))
+  (setq outorg-initial-window-config
+        (current-window-configuration))
+  (outorg-copy-and-convert))
+
+(defun outorg-save-edits ()
+  "Replace code-buffer content with (converted) edit-buffer content and
+  kill edit-buffer"
+  (interactive)
+  (widen)
+  (funcall
+   (outorg-get-buffer-mode
+    (marker-buffer outorg-code-buffer-marker)))
+  (outorg-convert-back-to-code)
+  (outorg-replace-code-with-edits)
+  (kill-buffer
+   (marker-buffer outorg-edit-buffer-marker))
+  (set-window-configuration
+   outorg-initial-window-config)
+  ;; (switch-to-buffer
+  ;;  (marker-buffer outorg-code-buffer-marker))
+  ;; (goto-char
+  ;;  (marker-position outorg-code-buffer-marker))
+  (outorg-reset-global-vars))
+
+;; *** Additional outline commands (from `out-xtra').
+
+(defun outline-hide-sublevels (keep-levels)
+  "Hide everything except the first KEEP-LEVEL headers."
+  (interactive "p")
+  (if (< keep-levels 1)
+      (error "Must keep at least one level of headers"))
+  (setq keep-levels (1- keep-levels))
+  (save-excursion
+    (goto-char (point-min))
+    (hide-subtree)
+    (show-children keep-levels)
+    (condition-case err
+      (while (outline-get-next-sibling)
+	(hide-subtree)
+	(show-children keep-levels))
+      (error nil))))
+
+(defun outline-hide-other ()
+  "Hide everything except for the current body and the parent headings."
+  (interactive)
+  (outline-hide-sublevels 1)
+  (let ((last (point))
+	(pos (point)))
+    (while (save-excursion
+	     (and (re-search-backward "[\n\r]" nil t)
+		  (eq (following-char) ?\r)))
+      (save-excursion
+	(beginning-of-line)
+	(if (eq last (point))
+	    (progn
+	      (outline-next-heading)
+	      (outline-flag-region last (point) ?\n))
+	  (show-children)
+	  (setq last (point)))))))
+
+
 ;; *** Edit as Org-file
 
 (defun outorg-copy-and-convert ()
@@ -325,6 +396,18 @@ If WHOLE-BUFFER-P is non-nil, copy the whole buffer, otherwise
             (insert "#+end_example"))
           (newline))
         (setq last-line-comment-p t))
+       ;; last line after line of code
+       ((and
+         (eq (line-number-at-pos)
+             (1- (count-lines (point-min) (point-max))))
+         (not last-line-comment-p))
+        ;; (unless (looking-at "^[[:space:]]*$")
+        (forward-line)
+        (newline)
+        (if in-org-babel-load-languages-p
+            (insert "#+end_src")
+          (insert "#+end_example"))
+        (newline))
        ;; line of code after line of code
        (t (setq last-line-comment-p nil)))
       (forward-line))))
@@ -394,81 +477,9 @@ Assume that edit-buffer major-mode has been set back to the
 (defun outorg-reset-global-vars ()
   "Reset some global vars defined by outorg to initial values."
   (set-marker outorg-code-buffer-marker nil)
-  (set-marker outorg-narrowed-code-buffer-marker nil)
   (set-marker outorg-edit-buffer-marker nil)
   (setq outorg-edit-whole-buffer-p nil)
   (setq outorg-initial-window-config nil))
-
-;; ** Commands
-
-;; *** Edit as Org 
-
-(defun outorg-edit-as-org (arg)
-  "Convert and copy to temporary Org buffer
-With ARG, edit the whole buffer, otherwise the current subtree."
-  (interactive "P")
-  (setq outorg-code-buffer-marker (point-marker))
-  (and arg (setq outorg-edit-whole-buffer-p t))
-  (setq outorg-initial-window-config
-        (current-window-configuration))
-  (outorg-copy-and-convert))
-
-(defun outorg-save-edits ()
-  "Replace code-buffer content with (converted) edit-buffer content and
-  kill edit-buffer"
-  (interactive)
-  (widen)
-  (funcall
-   (outorg-get-buffer-mode
-    (marker-buffer outorg-code-buffer-marker)))
-  (outorg-convert-back-to-code)
-  (outorg-replace-code-with-edits)
-  (kill-buffer
-   (marker-buffer outorg-edit-buffer-marker))
-  (set-window-configuration
-   outorg-initial-window-config)
-  ;; (switch-to-buffer
-  ;;  (marker-buffer outorg-code-buffer-marker))
-  ;; (goto-char
-  ;;  (marker-position outorg-code-buffer-marker))
-  (outorg-reset-global-vars))
-
-;; *** Additional outline commands (from `out-xtra').
-
-(defun outline-hide-sublevels (keep-levels)
-  "Hide everything except the first KEEP-LEVEL headers."
-  (interactive "p")
-  (if (< keep-levels 1)
-      (error "Must keep at least one level of headers"))
-  (setq keep-levels (1- keep-levels))
-  (save-excursion
-    (goto-char (point-min))
-    (hide-subtree)
-    (show-children keep-levels)
-    (condition-case err
-      (while (outline-get-next-sibling)
-	(hide-subtree)
-	(show-children keep-levels))
-      (error nil))))
-
-(defun outline-hide-other ()
-  "Hide everything except for the current body and the parent headings."
-  (interactive)
-  (outline-hide-sublevels 1)
-  (let ((last (point))
-	(pos (point)))
-    (while (save-excursion
-	     (and (re-search-backward "[\n\r]" nil t)
-		  (eq (following-char) ?\r)))
-      (save-excursion
-	(beginning-of-line)
-	(if (eq last (point))
-	    (progn
-	      (outline-next-heading)
-	      (outline-flag-region last (point) ?\n))
-	  (show-children)
-	  (setq last (point)))))))
-
 
 ;; * Keybindings.
 
@@ -488,6 +499,13 @@ With ARG, edit the whole buffer, otherwise the current subtree."
 	 (define-key map "\C-k" 'show-branches)
 	 (define-key map "\C-q" 'outline-hide-sublevels)
 	 (define-key map "\C-o" 'outline-hide-other)
+          ;; TODO differentiate between called in code or edit buffer
+         (define-key map "'" 'outorg-edit-as-org)
+         ;; TODO add these keybindings to org-mode keymap (all?)
+         ;; (define-key map "\C-s" 'outorg-save-edits)
+         ;; (define-key map "\C-c" 'outorg-save-edits)
+         ;; (define-key map "'" 'outorg-save-edits)
+
 	 (define-key outline-minor-mode-map [menu-bar hide hide-sublevels]
 	   '("Hide Sublevels" . outline-hide-sublevels))
 	 (define-key outline-minor-mode-map [menu-bar hide hide-other]
