@@ -127,54 +127,6 @@
   (with-current-buffer buffer-or-string
      major-mode))
 
-
-;; ;; *** Calculate the outline-regexp
-
-;; (defun outorg2-calc-outline-regexp ()
-;;   "Calculate the outline regexp for the current mode."
-;;   (let* ((comment-start-no-space
-;;           (replace-regexp-in-string
-;;            "[[:space:]]+" "" comment-start))
-;;          (comment-start-region
-;;           (if (and
-;;                comment-end
-;;                (not (string-equal "" comment-end)))
-;;               comment-start-no-space
-;;             (concat
-;;              comment-start-no-space comment-start-no-space))))
-;;     ;; the "^" not needed by outline, but by outorg2 (?)
-;;     (concat "^" comment-start-region " [*]+ ")))
-
-;; ;; *** Calculate the outline-level
-
-;; (defun outorg2-calc-outline-level ()
-;;   "Calculate the right outline level for the outorg2-outline-regexp"
-;;   (save-excursion
-;;     (save-match-data
-;;       (let ((len (- (match-end 0) (match-beginning 0))))
-;;         (- len (+ 2 (* 2 (length (format "%s" comment-start))))))))) 
-
-
-;; ;; *** Set outline-regexp und outline-level
-
-;; (defun outorg2-set-local-outline-regexp-and-level (regexp &optional fun)
-;;    "Set `outline-regexp' locally to REGEXP and `outline-level' to FUN."
-;; 	(make-local-variable 'outline-regexp)
-;; 	(setq outline-regexp regexp)
-;; 	(and fun
-;;              (make-local-variable 'outline-level)
-;;              (setq outline-level fun)))
-
-;; ;; *** Outorg2 hook-functions
-
-;; (defun outorg2-hook-function ()
-;;   "Add this function to outline-minor-mode-hook"
-;;   (let ((out-regexp (outorg2-calc-outline-regexp)))
-;;     (outorg2-set-local-outline-regexp-and-level
-;;      out-regexp 'outorg2-calc-outline-level)))
-
-;; (add-hook 'outline-minor-mode-hook 'outorg2-hook-function)
-
 ;; ** Commands
 
 ;; *** Edit as Org 
