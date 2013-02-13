@@ -128,53 +128,52 @@
      major-mode))
 
 
-;; *** Calculate the outline-regexp
+;; ;; *** Calculate the outline-regexp
 
-(defun outorg2-calc-outline-regexp ()
-  "Calculate the outline regexp for the current mode."
-  (let* ((comment-start-no-space
-          (replace-regexp-in-string
-           "[[:space:]]+" "" comment-start))
-         (comment-start-region
-          (if (and
-               comment-end
-               (not (string-equal "" comment-end)))
-              comment-start-no-space
-            (concat
-             comment-start-no-space comment-start-no-space))))
-    ;; the "^" not needed by outline, but by outorg2 (?)
-    (concat "^" comment-start-region " [*]+ ")))
+;; (defun outorg2-calc-outline-regexp ()
+;;   "Calculate the outline regexp for the current mode."
+;;   (let* ((comment-start-no-space
+;;           (replace-regexp-in-string
+;;            "[[:space:]]+" "" comment-start))
+;;          (comment-start-region
+;;           (if (and
+;;                comment-end
+;;                (not (string-equal "" comment-end)))
+;;               comment-start-no-space
+;;             (concat
+;;              comment-start-no-space comment-start-no-space))))
+;;     ;; the "^" not needed by outline, but by outorg2 (?)
+;;     (concat "^" comment-start-region " [*]+ ")))
 
-;; *** Calculate the outline-level
+;; ;; *** Calculate the outline-level
 
-(defun outorg2-calc-outline-level ()
-  "Calculate the right outline level for the outorg2-outline-regexp"
-  (save-excursion
-    (save-match-data
-      (let ((len (- (match-end 0) (match-beginning 0))))
-        (- len (+ 2 (* 2 (length (format "%s" comment-start))))))))) 
+;; (defun outorg2-calc-outline-level ()
+;;   "Calculate the right outline level for the outorg2-outline-regexp"
+;;   (save-excursion
+;;     (save-match-data
+;;       (let ((len (- (match-end 0) (match-beginning 0))))
+;;         (- len (+ 2 (* 2 (length (format "%s" comment-start))))))))) 
 
 
-;; *** Set outline-regexp und outline-level
+;; ;; *** Set outline-regexp und outline-level
 
-(defun outorg2-set-local-outline-regexp-and-level (regexp &optional fun)
-   "Set `outline-regexp' locally to REGEXP and `outline-level' to FUN."
-	(make-local-variable 'outline-regexp)
-	(setq outline-regexp regexp)
-	(and fun
-             (make-local-variable 'outline-level)
-             (setq outline-level fun)))
+;; (defun outorg2-set-local-outline-regexp-and-level (regexp &optional fun)
+;;    "Set `outline-regexp' locally to REGEXP and `outline-level' to FUN."
+;; 	(make-local-variable 'outline-regexp)
+;; 	(setq outline-regexp regexp)
+;; 	(and fun
+;;              (make-local-variable 'outline-level)
+;;              (setq outline-level fun)))
 
-;; *** Outorg2 hook-functions
+;; ;; *** Outorg2 hook-functions
 
-(defun outorg2-hook-function ()
-  "Add this function to outline-minor-mode-hook"
-  (let ((out-regexp (outorg2-calc-outline-regexp)))
-    (outorg2-set-local-outline-regexp-and-level
-     out-regexp 'outorg2-calc-outline-level)
-    (outorg2-fontify-headlines out-regexp)))
+;; (defun outorg2-hook-function ()
+;;   "Add this function to outline-minor-mode-hook"
+;;   (let ((out-regexp (outorg2-calc-outline-regexp)))
+;;     (outorg2-set-local-outline-regexp-and-level
+;;      out-regexp 'outorg2-calc-outline-level)))
 
-(add-hook 'outline-minor-mode-hook 'outorg2-hook-function)
+;; (add-hook 'outline-minor-mode-hook 'outorg2-hook-function)
 
 ;; ** Commands
 
@@ -277,6 +276,7 @@ If WHOLE-BUFFER-P is non-nil, copy the whole buffer, otherwise
            (intern language-name)
            org-babel-load-languages)))
     (goto-char (point-min))
+    (outorg2-remove-trailing-blank-lines)
     (while (not (eobp))
       (cond
        ;; empty line (do nothing)
@@ -401,6 +401,22 @@ Assume that edit-buffer major-mode has been set back to the
   (set-marker outorg2-edit-buffer-marker nil)
   (setq outorg2-edit-whole-buffer-p nil)
   (setq outorg2-initial-window-config nil))
+
+;; inspired by `article-remove-trailing-blank-lines' in `gnus-art.el'
+(defun outorg2-remove-trailing-blank-lines ()
+  "Remove all trailing blank lines from buffer."
+  (save-excursion
+    (let ((inhibit-read-only t))
+      (goto-char (point-max))
+      (delete-region
+       (point)
+       (progn
+	 (while (and (not (bobp))
+		     (looking-at "^[ \t]*$"))
+	   (forward-line -1))
+	 (forward-line 1)
+	 (point))))))
+
 
 ;; * Keybindings.
 

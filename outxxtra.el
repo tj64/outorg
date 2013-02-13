@@ -109,14 +109,6 @@
 
 ;; ** Non-interactive Functions
 
-;; *** Get buffer major mode
-
-(defun outxxtra-get-buffer-mode (buffer-or-string)
-  "Return major mode of BUFFER-OR-STRING."
-  (with-current-buffer buffer-or-string
-     major-mode))
-
-
 ;; *** Calculate the outline-regexp
 
 (defun outxxtra-calc-outline-regexp ()
@@ -198,12 +190,34 @@
 
 ;; *** Outxxtra hook-functions
 
+;; attempt to load a feature/library, failing silently
+;; copied from http://www.mygooglest.com/fni/dot-emacs.html
+(defun try-require (feature)
+  "Attempt to load a library or module. Return true if the
+library given as argument is successfully loaded. If not, instead
+of an error, just add the package to a list of missing packages."
+  (condition-case err
+      ;; protected form
+      (progn
+        (message "Checking for library `%s'..." feature)
+        (if (stringp feature)
+            (load-library feature)
+          (require feature))
+        (message "Checking for library `%s'... Found" feature))
+    ;; error handler
+    (file-error  ; condition
+     (progn
+       (message "Checking for library `%s'... Missing" feature))
+     nil)))
+
+;; TODO coordinate outxxtra, outorg and orgstruct
 (defun outxxtra-hook-function ()
   "Add this function to outline-minor-mode-hook"
   (let ((out-regexp (outxxtra-calc-outline-regexp)))
     (outxxtra-set-local-outline-regexp-and-level
      out-regexp 'outxxtra-calc-outline-level)
-    (outxxtra-fontify-headlines out-regexp)))
+    (outxxtra-fontify-headlines out-regexp)
+    (try-require 'outorg2)))
 
 (add-hook 'outline-minor-mode-hook 'outxxtra-hook-function)
 
@@ -263,8 +277,9 @@
 	 (define-key map "\C-k" 'show-branches)
 	 (define-key map "\C-q" 'outline-hide-sublevels)
 	 (define-key map "\C-o" 'outline-hide-other)
-          ;; TODO differentiate between called in code or edit buffer
-         (define-key map "'" 'outxxtra-edit-as-org)
+         ;; TODO move this to outorg2.el
+         ;; TODO differentiate between called in code or edit buffer
+         (define-key map "'" 'outorg2-edit-as-org)
          ;; TODO add these keybindings to org-mode keymap (all?)
          ;; (define-key map "\C-s" 'outxxtra-save-edits)
          ;; (define-key map "\C-c" 'outxxtra-save-edits)
