@@ -219,7 +219,8 @@ of an error, just add the package to a list of missing packages."
     (outxxtra-fontify-headlines out-regexp)
     (try-require 'outorg2)))
 
-(add-hook 'outline-minor-mode-hook 'outxxtra-hook-function)
+;; ;; add this to your .emacs
+;; (add-hook 'outline-minor-mode-hook 'outxxtra-hook-function)
 
 ;; ** Commands
 

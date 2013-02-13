@@ -165,7 +165,7 @@ With ARG, edit the whole buffer, otherwise the current subtree."
 
 (defun outorg2-copy-and-convert ()
   "Copy code buffer content to tmp-buffer and convert it to Org syntax.
-If WHOLE-BUFFER-P is non-nil, copy the whole buffer, otherwise
+If `outorg2-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
   the current subtree."
   (let* ((edit-buffer
           (get-buffer-create "*outorg2-edit-buffer*")))
@@ -368,7 +368,6 @@ Assume that edit-buffer major-mode has been set back to the
 	   (forward-line -1))
 	 (forward-line 1)
 	 (point))))))
-
 
 ;; * Keybindings.
 
