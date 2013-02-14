@@ -7,41 +7,92 @@
 
 * NEXT Version 1.0
 
-** special minor-mode for edit-buffer 
+** TODO add special marker to narrowed buffers to remember point-position
+   [2013-02-14 Do 17:18]
+** DONE add persistent header line to edit-buffer
+   CLOSED: [2013-02-14 Do 17:18]
+   :LOGBOOK:
+   - State "DONE"       from ""           [2013-02-14 Do 17:18]
+   :END:
+   [2013-02-14 Do 17:15]
+** DONE move outxxtra.el to its own github repo
+   CLOSED: [2013-02-14 Do 17:15]
+   :LOGBOOK:
+   - State "DONE"       from "TODO"       [2013-02-14 Do 17:15]
+   :END:
+   [2013-02-14 Do 17:14]
+** TODO special minor-mode for edit-buffer
    [2013-02-13 Mi 01:42]
-*** outorg-keybindings in edit-buffer
+*** TODO outorg-keybindings in edit-buffer
     [2013-02-13 Mi 01:44]
-*** kill-buffer actions
+*** TODO kill-buffer actions
     [2013-02-13 Mi 01:44]
-**** reset window-config
+**** TODO reset window-config
      [2013-02-13 Mi 01:45]
-**** save dangling edits in tmp-file
+**** TODO save dangling edits in tmp-file
      [2013-02-13 Mi 01:44]
-**** reset-global-vars
+**** TODO reset-global-vars
      [2013-02-13 Mi 01:45]
-** TODO fix bug eob when last line was line of code (conversion to org)
+** DONE fix bug eob when last line was line of code (conversion to org)
+   CLOSED: [2013-02-14 Do 17:11]
+   :LOGBOOK:
+   - State "DONE"       from "TODO"       [2013-02-14 Do 17:11]
+   :END:
    [2013-02-13 Mi 01:39]
-** TODO refactor out-xxtra.el (only extensions to out-xtra.el)
+** DONE refactor outxxtra.el (only extensions to out-xtra.el)
+   CLOSED: [2013-02-14 Do 17:11]
+   :LOGBOOK:
+   - State "DONE"       from "TODO"       [2013-02-14 Do 17:11]
+   :END:
    [2013-02-13 Mi 01:38]
-** TODO refactor outorg2.el (only Org-style editing)
+** DONE refactor outorg2.el (only Org-style editing)
+   CLOSED: [2013-02-14 Do 17:11]
+   :LOGBOOK:
+   - State "DONE"       from "TODO"       [2013-02-14 Do 17:11]
+   :END:
    [2013-02-13 Mi 01:37]
 ** TODO announce new version in PicoLisp mailing-list
    [2013-02-13 Mi 01:37]
 ** TODO change version number (comment and const)
    [2013-02-13 Mi 01:37]
-** TODO fix menu
+** CANCELLED fix menu                                             :CANCELLED:
+   CLOSED: [2013-02-14 Do 17:12]
+   :LOGBOOK:
+   - State "CANCELLED"  from "TODO"       [2013-02-14 Do 17:12] \\
+     related to outxxtra.el
+   :END:
    [2013-02-13 Mi 01:37]
 ** TODO develop README to Worg article
    [2013-02-13 Mi 01:37]
 ** TODO write installation guide (with outline-magic)
    [2013-02-13 Mi 01:37]
-** TODO check keybindings, compare to org
+** CANCELLED check keybindings, compare to org                    :CANCELLED:
+   CLOSED: [2013-02-14 Do 17:13]
+   :LOGBOOK:
+   - State "CANCELLED"  from "TODO"       [2013-02-14 Do 17:13] \\
+     related to outxxtra.el
+   :END:
    [2013-02-13 Mi 01:36]
-** TODO fix demote and promote subtree
+** CANCELLED fix demote and promote subtree                       :CANCELLED:
+   CLOSED: [2013-02-14 Do 17:11]
+   :LOGBOOK:
+   - State "CANCELLED"  from "TODO"       [2013-02-14 Do 17:11] \\
+     related to outxxtra.el
+   :END:
    [2013-02-13 Mi 01:36]
-** TODO check with different languages (comment-end true, e..g. HTML)
+** CANCELLED check with different languages (comment-end true, e..g. HTML) :CANCELLED:
+   CLOSED: [2013-02-14 Do 17:13]
+   :LOGBOOK:
+   - State "CANCELLED"  from "TODO"       [2013-02-14 Do 17:13] \\
+     related to outxxtra.el
+   :END:
    [2013-02-13 Mi 01:36]
-** TODO check with different languages (comment-end false, e.g. R, Java)
+** CANCELLED check with different languages (comment-end false, e.g. R, Java) :CANCELLED:
+   CLOSED: [2013-02-14 Do 17:13]
+   :LOGBOOK:
+   - State "CANCELLED"  from "TODO"       [2013-02-14 Do 17:13] \\
+     related to outxxtra.el
+   :END:
    [2013-02-13 Mi 01:36]
 
 
