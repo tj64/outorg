@@ -7,6 +7,8 @@
 
 * NEXT Version 1.0
 
+** TODO fix double insertion bug (when edit-buffer killed without saving??)
+   [2013-02-14 Do 17:37]
 ** TODO add special marker to narrowed buffers to remember point-position
    [2013-02-14 Do 17:18]
 ** DONE add persistent header line to edit-buffer

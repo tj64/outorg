@@ -49,32 +49,6 @@
 ;; comments found in many programming languages are not recognized and lead to
 ;; undefined behaviour.
 
-;; ** Emacs Version
-
-;; `outorg2.el' works with [GNU Emacs 24.2.1 (x86_64-unknown-linux-gnu, GTK+
-;; Version 3.6.4) of 2013-01-20 on eric]. No attempts of testing with older
-;; versions or other types of Emacs have be made (yet).
-
-;; ** Installation
-
-;; Insert
-  ;; (require 'outorg2)
-;; in your .emacs file to install. 
-
-;; ** ChangeLog
-
-;; | date            | author(s)       | version |
-;; |-----------------+-----------------+---------|
-;; | <2013-02-13 Mi> | Thorsten Jolitz |     0.9 |
-
-;; ** Bugs
-
-;; `outorg2' is line-based, it only works with 'one-line' comments, i.e. with
-;; comment-sections like those produced by `comment-region' (a command that
-;; comments or uncomments each line in the region). Those special multi-line
-;; comments found in many programming languages are not recognized and lead to
-;; undefined behaviour.
-
 ;; * Requires
 
 (require 'outline)
