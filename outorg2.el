@@ -274,8 +274,7 @@ If `outorg2-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
          (eq (line-number-at-pos)
              (1- (count-lines (point-min) (point-max))))
          (not last-line-comment-p))
-        ;; (unless (looking-at "^[[:space:]]*$")
-        (forward-line)
+        (goto-char (point-max))
         (newline)
         (if in-org-babel-load-languages-p
             (insert "#+end_src")
