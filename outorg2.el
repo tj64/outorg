@@ -107,59 +107,31 @@
 
 ;; *** Custom Groups
 
-;; (defgroup outorg2 nil
-;;   "Library for outline navigation and Org-mode editing in Lisp buffers."
-;;   :prefix "outorg2-"
-;;   :group 'lisp 'outlines
-;;   :link '(url-link "http://emacswiki.org/emacs/OutlineMinorMode"))
-
+(defgroup outorg2 nil
+  "Library for outline navigation and Org-mode editing in Lisp buffers."
+  :prefix "outorg2-"
+  :group 'lisp 
+  :link '(url-link "http://emacswiki.org/emacs/OutlineMinorMode"))
 
 ;; *** Custom Vars
 
+;; inspired by 'org-src.el'
+(defcustom outorg2-edit-buffer-persistent-message t
+  "Non-nil means show persistent exit help message while editing src examples.
+The message is shown in the header-line, which will be created in the
+first line of the window showing the editing buffer."
+  :group 'outorg2
+  :type 'boolean)
+
+
 ;; * Functions
-
 ;; ** Non-interactive Functions
-
 ;; *** Get buffer major mode
 
 (defun outorg2-get-buffer-mode (buffer-or-string)
   "Return major mode of BUFFER-OR-STRING."
   (with-current-buffer buffer-or-string
      major-mode))
-
-;; ** Commands
-
-;; *** Edit as Org 
-
-(defun outorg2-edit-as-org (arg)
-  "Convert and copy to temporary Org buffer
-With ARG, edit the whole buffer, otherwise the current subtree."
-  (interactive "P")
-  (setq outorg2-code-buffer-marker (point-marker))
-  (and arg (setq outorg2-edit-whole-buffer-p t))
-  (setq outorg2-initial-window-config
-        (current-window-configuration))
-  (outorg2-copy-and-convert))
-
-(defun outorg2-save-edits ()
-  "Replace code-buffer content with (converted) edit-buffer content and
-  kill edit-buffer"
-  (interactive)
-  (widen)
-  (funcall
-   (outorg2-get-buffer-mode
-    (marker-buffer outorg2-code-buffer-marker)))
-  (outorg2-convert-back-to-code)
-  (outorg2-replace-code-with-edits)
-  (kill-buffer
-   (marker-buffer outorg2-edit-buffer-marker))
-  (set-window-configuration
-   outorg2-initial-window-config)
-  ;; (switch-to-buffer
-  ;;  (marker-buffer outorg2-code-buffer-marker))
-  ;; (goto-char
-  ;;  (marker-position outorg2-code-buffer-marker))
-  (outorg2-reset-global-vars))
 
 ;; *** Edit as Org-file
 
@@ -168,7 +140,8 @@ With ARG, edit the whole buffer, otherwise the current subtree."
 If `outorg2-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
   the current subtree."
   (let* ((edit-buffer
-          (get-buffer-create "*outorg2-edit-buffer*")))
+          (get-buffer-create "*outorg2-edit-buffer*"))
+         (msg "Exit with C-c ' (C-c and single quote)"))
     (save-restriction
       (with-current-buffer edit-buffer (erase-buffer))
       (widen)
@@ -191,13 +164,15 @@ If `outorg2-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
     (and outorg2-edit-whole-buffer-p
          (goto-char
           (marker-position outorg2-code-buffer-marker)))
-    (setq outorg2-edit-buffer-marker (point-marker)))
+    (setq outorg2-edit-buffer-marker (point-marker))
   ;; activate programming language major mode and convert to org
   (funcall (outorg2-get-buffer-mode
             (marker-buffer outorg2-code-buffer-marker)))
   (outorg2-convert-to-org)
   ;; change major mode to org-mode
   (org-mode)
+  (and outorg2-edit-buffer-persistent-message
+       (org-set-local 'header-line-format msg))
   (if outorg2-edit-whole-buffer-p
       (progn
         (org-first-headline-recenter)
@@ -207,7 +182,7 @@ If `outorg2-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
         (show-subtree))
     (goto-char
      (marker-position outorg2-edit-buffer-marker))
-    (show-all)))
+    (show-all))))
 
 (defun outorg2-convert-to-org ()
   "Convert file content to Org Syntax"
@@ -275,7 +250,8 @@ If `outorg2-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
              (1- (count-lines (point-min) (point-max))))
          (not last-line-comment-p))
         (goto-char (point-max))
-        (newline)
+        (unless (looking-at "^[[:space:]]*$")
+          (newline))
         (if in-org-babel-load-languages-p
             (insert "#+end_src")
           (insert "#+end_example"))
@@ -367,6 +343,41 @@ Assume that edit-buffer major-mode has been set back to the
 	   (forward-line -1))
 	 (forward-line 1)
 	 (point))))))
+
+
+;; ** Commands
+;; *** Edit as Org 
+
+(defun outorg2-edit-as-org (arg)
+  "Convert and copy to temporary Org buffer
+With ARG, edit the whole buffer, otherwise the current subtree."
+  (interactive "P")
+  (setq outorg2-code-buffer-marker (point-marker))
+  (and arg (setq outorg2-edit-whole-buffer-p t))
+  (setq outorg2-initial-window-config
+        (current-window-configuration))
+  (outorg2-copy-and-convert))
+
+(defun outorg2-save-edits ()
+  "Replace code-buffer content with (converted) edit-buffer content and
+  kill edit-buffer"
+  (interactive)
+  (widen)
+  (funcall
+   (outorg2-get-buffer-mode
+    (marker-buffer outorg2-code-buffer-marker)))
+  (outorg2-convert-back-to-code)
+  (outorg2-replace-code-with-edits)
+  (kill-buffer
+   (marker-buffer outorg2-edit-buffer-marker))
+  (set-window-configuration
+   outorg2-initial-window-config)
+  ;; (switch-to-buffer
+  ;;  (marker-buffer outorg2-code-buffer-marker))
+  ;; (goto-char
+  ;;  (marker-position outorg2-code-buffer-marker))
+  (outorg2-reset-global-vars))
+
 
 ;; * Keybindings.
 

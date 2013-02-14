@@ -64,23 +64,31 @@
 
 ;; ** Bugs
 
-;; `outxxtra' is line-based, it only works with 'one-line' comments, i.e. with
-;; comment-sections like those produced by `comment-region' (a command that
-;; comments or uncomments each line in the region). Those special multi-line
-;; comments found in many programming languages are not recognized and lead to
-;; undefined behaviour.
+;; `outxxtra' uses a fixed format `outline-regexp' (and `outline-level'), the
+;; one produced when applying `comment-region' on an Org-mode style headline
+;; in the active programming-language major-mode (e.g. ';; ** Entry' in an
+;; Emacs Lisp buffer, or '## ** Entry' in an PicoLisp buffer).
+
+;; This could be make more flexible (and customizable), albeit at the price
+;; that `outorg.el' would not work anymore with `outxxtra'. And - these
+;; Org-style heades look good, why change them?
 
 ;; * Requires
 
 (require 'outline)
-(require 'org)
 
 ;; * Variables
-
 ;; ** Consts
 
 (defconst outxxtra-version "0.9"
   "outxxtra version number.")
+
+;; copied from org-source.el
+(defconst outxxtra-level-faces
+  '(outxxtra-level-1 outxxtra-level-2 outxxtra-level-3 outxxtra-level-4
+                     outxxtra-level-5 outxxtra-level-6 outxxtra-level-7
+                     outxxtra-level-8))
+
 
 ;; ** Vars
 
@@ -96,14 +104,146 @@
 
 ;; *** Custom Groups
 
-;; (defgroup outxxtra nil
-;;   "Library for outline navigation and Org-mode editing in Lisp buffers."
-;;   :prefix "outxxtra-"
-;;   :group 'lisp 'outlines
-;;   :link '(url-link "http://emacswiki.org/emacs/OutlineMinorMode"))
+(defgroup outxxtra nil
+  "Enhanced library for outline navigation in source code buffers."
+  :prefix "outxxtra-"
+  :group 'lisp)
 
+(defgroup outxxtra-faces nil
+  "Faces in Outxxtra."
+  :tag "Outxxtry Faces"
+  :group 'outxxtra)
+
+;; *** Faces
+
+;; copied from 'org-compat.el'
+(defun outxxtra-compatible-face (inherits specs)
+  "Make a compatible face specification.
+If INHERITS is an existing face and if the Emacs version supports it,
+just inherit the face.  If INHERITS is set and the Emacs version does
+not support it, copy the face specification from the inheritance face.
+If INHERITS is not given and SPECS is, use SPECS to define the face.
+XEmacs and Emacs 21 do not know about the `min-colors' attribute.
+For them we convert a (min-colors 8) entry to a `tty' entry and move it
+to the top of the list.  The `min-colors' attribute will be removed from
+any other entries, and any resulting duplicates will be removed entirely."
+  (when (and inherits (facep inherits) (not specs))
+    (setq specs (or specs
+		    (get inherits 'saved-face)
+		    (get inherits 'face-defface-spec))))
+  (cond
+   ((and inherits (facep inherits)
+	 (not (featurep 'xemacs))
+	 (>= emacs-major-version 22)
+	 ;; do not inherit outline faces before Emacs 23
+	 (or (>= emacs-major-version 23)
+	     (not (string-match "\\`outline-[0-9]+"
+				(symbol-name inherits)))))
+    (list (list t :inherit inherits)))
+   ((or (featurep 'xemacs) (< emacs-major-version 22))
+    ;; These do not understand the `min-colors' attribute.
+    (let (r e a)
+      (while (setq e (pop specs))
+	(cond
+	 ((memq (car e) '(t default)) (push e r))
+	 ((setq a (member '(min-colors 8) (car e)))
+	  (nconc r (list (cons (cons '(type tty) (delq (car a) (car e)))
+			       (cdr e)))))
+	 ((setq a (assq 'min-colors (car e)))
+	  (setq e (cons (delq a (car e)) (cdr e)))
+	  (or (assoc (car e) r) (push e r)))
+	 (t (or (assoc (car e) r) (push e r)))))
+      (nreverse r)))
+   (t specs)))
+(put 'outxxtra-compatible-face 'lisp-indent-function 1)
+
+;; The following face definitions have been copied from 'org-faces.el'
+(defface outxxtra-level-1 ;; originally copied from font-lock-function-name-face
+  (outxxtra-compatible-face 'outline-1
+    '((((class color) (min-colors 88) (background light)) (:foreground "Blue1"))
+      (((class color) (min-colors 88) (background dark)) (:foreground "LightSkyBlue"))
+      (((class color) (min-colors 16) (background light)) (:foreground "Blue"))
+      (((class color) (min-colors 16) (background dark)) (:foreground "LightSkyBlue"))
+      (((class color) (min-colors 8)) (:foreground "blue" :bold t))
+      (t (:bold t))))
+  "Face used for level 1 headlines."
+  :group 'outxxtra-faces)
+
+(defface outxxtra-level-2 ;; originally copied from font-lock-variable-name-face
+  (outxxtra-compatible-face 'outline-2
+    '((((class color) (min-colors 16) (background light)) (:foreground "DarkGoldenrod"))
+      (((class color) (min-colors 16) (background dark))  (:foreground "LightGoldenrod"))
+      (((class color) (min-colors 8)  (background light)) (:foreground "yellow"))
+      (((class color) (min-colors 8)  (background dark))  (:foreground "yellow" :bold t))
+      (t (:bold t))))
+  "Face used for level 2 headlines."
+  :group 'outxxtra-faces)
+
+(defface outxxtra-level-3 ;; originally copied from font-lock-keyword-face
+  (outxxtra-compatible-face 'outline-3
+    '((((class color) (min-colors 88) (background light)) (:foreground "Purple"))
+      (((class color) (min-colors 88) (background dark))  (:foreground "Cyan1"))
+      (((class color) (min-colors 16) (background light)) (:foreground "Purple"))
+      (((class color) (min-colors 16) (background dark))  (:foreground "Cyan"))
+      (((class color) (min-colors 8)  (background light)) (:foreground "purple" :bold t))
+      (((class color) (min-colors 8)  (background dark))  (:foreground "cyan" :bold t))
+      (t (:bold t))))
+  "Face used for level 3 headlines."
+  :group 'outxxtra-faces)
+
+(defface outxxtra-level-4   ;; originally copied from font-lock-comment-face
+  (outxxtra-compatible-face 'outline-4
+    '((((class color) (min-colors 88) (background light)) (:foreground "Firebrick"))
+      (((class color) (min-colors 88) (background dark))  (:foreground "chocolate1"))
+      (((class color) (min-colors 16) (background light)) (:foreground "red"))
+      (((class color) (min-colors 16) (background dark))  (:foreground "red1"))
+      (((class color) (min-colors 8) (background light))  (:foreground "red" :bold t))
+      (((class color) (min-colors 8) (background dark))   (:foreground "red" :bold t))
+      (t (:bold t))))
+  "Face used for level 4 headlines."
+  :group 'outxxtra-faces)
+
+(defface outxxtra-level-5 ;; originally copied from font-lock-type-face
+  (outxxtra-compatible-face 'outline-5
+    '((((class color) (min-colors 16) (background light)) (:foreground "ForestGreen"))
+      (((class color) (min-colors 16) (background dark)) (:foreground "PaleGreen"))
+      (((class color) (min-colors 8)) (:foreground "green"))))
+  "Face used for level 5 headlines."
+  :group 'outxxtra-faces)
+
+(defface outxxtra-level-6 ;; originally copied from font-lock-constant-face
+  (outxxtra-compatible-face 'outline-6
+    '((((class color) (min-colors 16) (background light)) (:foreground "CadetBlue"))
+      (((class color) (min-colors 16) (background dark)) (:foreground "Aquamarine"))
+      (((class color) (min-colors 8)) (:foreground "magenta"))))
+  "Face used for level 6 headlines."
+  :group 'outxxtra-faces)
+
+(defface outxxtra-level-7 ;; originally copied from font-lock-builtin-face
+  (outxxtra-compatible-face 'outline-7
+    '((((class color) (min-colors 16) (background light)) (:foreground "Orchid"))
+      (((class color) (min-colors 16) (background dark)) (:foreground "LightSteelBlue"))
+      (((class color) (min-colors 8)) (:foreground "blue"))))
+  "Face used for level 7 headlines."
+  :group 'outxxtra-faces)
+
+(defface outxxtra-level-8 ;; originally copied from font-lock-string-face
+  (outxxtra-compatible-face 'outline-8
+    '((((class color) (min-colors 16) (background light)) (:foreground "RosyBrown"))
+      (((class color) (min-colors 16) (background dark)) (:foreground "LightSalmon"))
+      (((class color) (min-colors 8)) (:foreground "green"))))
+  "Face used for level 8 headlines."
+  :group 'outxxtra-faces)
 
 ;; *** Custom Vars
+
+;; copied form org.el
+(defcustom outxxtra-fontify-whole-heading-line nil
+  "Non-nil means fontify the whole line for headings.
+This is useful when setting a background color for the
+outxxtra-level-* faces."
+  :group 'outxxtra
+  :type 'boolean)
 
 ;; * Functions
 
@@ -154,29 +294,41 @@
   ;;        "^\\(\\**\\)\\(\\* \\)\\(.*\n?\\)"
   ;;      "^\\(\\**\\)\\(\\* \\)\\(.*\\)")
 
-  (let ((org-fontify-whole-heading-line "") ; "\n?")
+  (let ((outxxtra-fontify-whole-heading-line "") ; "\n?")
         (heading-1-regexp
          (concat (substring outline-regexp 0 -1) 
-                 "\\{1\\} \\(.*" org-fontify-whole-heading-line "\\)"))
+                 "\\{1\\} \\(.*" outxxtra-fontify-whole-heading-line "\\)"))
         (heading-2-regexp
          (concat (substring outline-regexp 0 -1)
-                 "\\{2\\} \\(.*" org-fontify-whole-heading-line "\\)"))
+                 "\\{2\\} \\(.*" outxxtra-fontify-whole-heading-line "\\)"))
         (heading-3-regexp
          (concat (substring outline-regexp 0 -1)
-                 "\\{3\\} \\(.*" org-fontify-whole-heading-line "\\)"))
+                 "\\{3\\} \\(.*" outxxtra-fontify-whole-heading-line "\\)"))
         (heading-4-regexp
          (concat (substring outline-regexp 0 -1)
-                 "\\{4,\\} \\(.*" org-fontify-whole-heading-line "\\)"))
+                 "\\{4,\\} \\(.*" outxxtra-fontify-whole-heading-line "\\)"))
          (heading-5-regexp
          (concat (substring outline-regexp 0 -1)
-                 "\\{5\\} \\(.*" org-fontify-whole-heading-line "\\)")))
+                 "\\{5\\} \\(.*" outxxtra-fontify-whole-heading-line "\\)"))
+        (heading-6-regexp
+         (concat (substring outline-regexp 0 -1)
+                 "\\{6,\\} \\(.*" outxxtra-fontify-whole-heading-line "\\)"))
+        (heading-7-regexp
+         (concat (substring outline-regexp 0 -1)
+                 "\\{7,\\} \\(.*" outxxtra-fontify-whole-heading-line "\\)"))
+        (heading-8-regexp
+         (concat (substring outline-regexp 0 -1)
+                 "\\{8,\\} \\(.*" outxxtra-fontify-whole-heading-line "\\)")))
     (font-lock-add-keywords
      nil
-     `((,heading-1-regexp 1 'org-level-1 t)
-       (,heading-2-regexp 1 'org-level-2 t)
-       (,heading-3-regexp 1 'org-level-3 t)
-       (,heading-4-regexp 1 'org-level-4 t)
-       (,heading-5-regexp 1 'org-level-5 t)))))
+     `((,heading-1-regexp 1 'outxxtra-level-1 t)
+       (,heading-2-regexp 1 'outxxtra-level-2 t)
+       (,heading-3-regexp 1 'outxxtra-level-3 t)
+       (,heading-4-regexp 1 'outxxtra-level-4 t)
+       (,heading-5-regexp 1 'outxxtra-level-5 t)
+       (,heading-6-regexp 1 'outxxtra-level-6 t)
+       (,heading-7-regexp 1 'outxxtra-level-7 t)
+       (,heading-8-regexp 1 'outxxtra-level-8 t)))))
 
 ;; *** Set outline-regexp und outline-level
 
