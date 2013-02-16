@@ -134,36 +134,47 @@ first line of the window showing the editing buffer."
 
 ;; * Functions
 ;; ** Non-interactive Functions
-;; *** Get buffer major mode
+;; *** Get Source Buffer Mode
 
 (defun outorg-get-buffer-mode (buffer-or-string)
   "Return major mode of BUFFER-OR-STRING."
   (with-current-buffer buffer-or-string
      major-mode))
 
-;; *** Edit as Org-file
+;; *** Configure Edit Buffer
 
 ;; copied and adapted from org-src.el
 (defun outorg-edit-mode-configure-buffer ()
   "Configure edit buffer"
-  (let ((msg "Exit with C-c ' (C-c and single quote)"))
+  (let ((msg
+         (concat "[ "
+                 (buffer-name
+                  (marker-buffer outorg-code-buffer-point-marker))
+                 " ] "
+                 "Exit with C-c ' (C-c and single quote)")))
     (org-add-hook 'kill-buffer-hook
                   'outorg-save-edits-to-tmp-file nil 'local)
     ;; (setq buffer-offer-save t)
     (and outorg-edit-buffer-persistent-message
          (org-set-local 'header-line-format msg))
     ;; (setq buffer-file-name
-    ;;       (concat (buffer-file-name (marker-buffer outorg-code-buffer-point-marker))
+    ;;       (concat (buffer-file-name
+    ;; (marker-buffer outorg-code-buffer-point-marker))
     ;;               "[" (buffer-name) "]"))
     (if (featurep 'xemacs)
         (progn
-          (make-variable-buffer-local 'write-contents-hooks) ; needed only for 21.4
-          (setq write-contents-hooks '(outorg-save-edits-to-tmp-file)))
-      (setq write-contents-functions '(outorg-save-edits-to-tmp-file)))
+          (make-variable-buffer-local
+           'write-contents-hooks) ; needed only for 21.4
+          (setq write-contents-hooks
+                '(outorg-save-edits-to-tmp-file)))
+      (setq write-contents-functions
+            '(outorg-save-edits-to-tmp-file)))
     ;; (setq buffer-read-only t) ; why?
     ))
 
 (org-add-hook 'outorg-edit-mode-hook 'outorg-edit-mode-configure-buffer)
+
+;; *** Backup Edit Buffer
 
 ;; copied and adapted from ob-core.el
 (defun outorg-temp-file (prefix &optional suffix)
@@ -183,7 +194,13 @@ of `outorg-temporary-directory'."
 (defun outorg-save-edits-to-tmp-file ()
   "Save edit-buffer in temporary file"
   (interactive)
-  (let ((tmp-file (outorg-temp-file buffer-file-name)))
+  (let ((tmp-file
+         (outorg-temp-file
+          (file-name-sans-extension
+           (file-name-nondirectory
+            (buffer-file-name
+             (marker-buffer
+              outorg-code-buffer-point-marker)))))))
     (write-region nil nil tmp-file)))
 
 ;; copied and adapted from ob-core.el
@@ -212,6 +229,36 @@ of `outorg-temporary-directory'."
 		  "[directory not defined]"))))))
 
 (add-hook 'kill-emacs-hook 'outorg-remove-temporary-directory)
+
+;; *** Reset Global Vars
+
+(defun outorg-reset-global-vars ()
+  "Reset some global vars defined by outorg to initial values."
+  (set-marker outorg-code-buffer-point-marker nil)
+  (set-marker outorg-code-buffer-beg-of-subtree-marker nil)
+  (set-marker outorg-edit-buffer-marker nil)
+  (setq outorg-edit-whole-buffer-p nil)
+  (setq outorg-initial-window-config nil))
+
+;; *** Remove Trailing Blank Lines
+
+;; inspired by `article-remove-trailing-blank-lines' in `gnus-art.el'
+(defun outorg-remove-trailing-blank-lines ()
+  "Remove all trailing blank lines from buffer."
+  (save-excursion
+    (let ((inhibit-read-only t))
+      (goto-char (point-max))
+      (delete-region
+       (point)
+       (progn
+	 (while (and (not (bobp))
+		     (looking-at "^[ \t]*$"))
+	   (forward-line -1))
+	 (forward-line 1)
+	 (point))))))
+
+
+;; *** Copy and Convert
 
 (defun outorg-copy-and-convert ()
   "Copy code buffer content to tmp-buffer and convert it to Org syntax.
@@ -408,30 +455,6 @@ Assume that edit-buffer major-mode has been set back to the
         ;; (save-buffer) 
         ))))
 
-(defun outorg-reset-global-vars ()
-  "Reset some global vars defined by outorg to initial values."
-  (set-marker outorg-code-buffer-point-marker nil)
-  (set-marker outorg-code-buffer-beg-of-subtree-marker nil)
-  (set-marker outorg-edit-buffer-marker nil)
-  (setq outorg-edit-whole-buffer-p nil)
-  (setq outorg-initial-window-config nil))
-
-;; inspired by `article-remove-trailing-blank-lines' in `gnus-art.el'
-(defun outorg-remove-trailing-blank-lines ()
-  "Remove all trailing blank lines from buffer."
-  (save-excursion
-    (let ((inhibit-read-only t))
-      (goto-char (point-max))
-      (delete-region
-       (point)
-       (progn
-	 (while (and (not (bobp))
-		     (looking-at "^[ \t]*$"))
-	   (forward-line -1))
-	 (forward-line 1)
-	 (point))))))
-
-
 ;; ** Commands
 ;; *** Edit as Org 
 
@@ -447,6 +470,8 @@ With ARG, edit the whole buffer, otherwise the current subtree."
   (setq outorg-initial-window-config
         (current-window-configuration))
   (outorg-copy-and-convert))
+
+;; *** Copy edits
 
 (defun outorg-copy-edits-and-exit ()
   "Replace code-buffer content with (converted) edit-buffer content and
