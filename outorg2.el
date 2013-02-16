@@ -182,6 +182,7 @@ of `outorg2-temporary-directory'."
 
 (defun outorg2-save-edits-to-tmp-file ()
   "Save edit-buffer in temporary file"
+  (interactive)
   (let ((tmp-file (outorg2-temp-file buffer-file-name)))
     (write-region nil nil tmp-file)))
 
@@ -212,7 +213,6 @@ of `outorg2-temporary-directory'."
 
 (add-hook 'kill-emacs-hook 'outorg2-remove-temporary-directory)
 
-;; TODO move buffer-creation (and run hook) up the chain, make buffer arg
 (defun outorg2-copy-and-convert ()
   "Copy code buffer content to tmp-buffer and convert it to Org syntax.
 If `outorg2-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise

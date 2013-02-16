@@ -7,7 +7,15 @@
 
 * NEXT Version 1.0
 
-** TODO fix double insertion bug (when edit-buffer killed without saving??)
+** TODO rename outorg2 to outorg and (old) outorg to old-outorg.
+   [2013-02-16 Sa 02:29]
+** TODO fix issue with indented comments when 'comment-region' is applied to indented text.
+   [2013-02-16 Sa 02:26]
+** DONE fix double insertion bug (when edit-buffer killed without saving??)
+   CLOSED: [2013-02-16 Sa 02:28]
+   :LOGBOOK:
+   - State "DONE"       from "TODO"       [2013-02-16 Sa 02:28]
+   :END:
    [2013-02-14 Do 17:37]
 ** TODO add special marker to narrowed buffers to remember point-position
    [2013-02-14 Do 17:18]
@@ -23,17 +31,41 @@
    - State "DONE"       from "TODO"       [2013-02-14 Do 17:15]
    :END:
    [2013-02-14 Do 17:14]
-** TODO special minor-mode for edit-buffer
+** DONE special minor-mode for edit-buffer
+   CLOSED: [2013-02-16 Sa 02:28]
+   :LOGBOOK:
+   - State "DONE"       from "TODO"       [2013-02-16 Sa 02:28]
+   :END:
    [2013-02-13 Mi 01:42]
-*** TODO outorg-keybindings in edit-buffer
+*** DONE outorg-keybindings in edit-buffer
+    CLOSED: [2013-02-16 Sa 02:28]
+    :LOGBOOK:
+    - State "DONE"       from "TODO"       [2013-02-16 Sa 02:28]
+    :END:
     [2013-02-13 Mi 01:44]
-*** TODO kill-buffer actions
+*** DONE kill-buffer actions
+    CLOSED: [2013-02-16 Sa 02:28]
+    :LOGBOOK:
+    - State "DONE"       from "TODO"       [2013-02-16 Sa 02:28]
+    :END:
     [2013-02-13 Mi 01:44]
-**** TODO reset window-config
+**** DONE reset window-config
+     CLOSED: [2013-02-16 Sa 02:28]
+     :LOGBOOK:
+     - State "DONE"       from "TODO"       [2013-02-16 Sa 02:28]
+     :END:
      [2013-02-13 Mi 01:45]
-**** TODO save dangling edits in tmp-file
+**** DONE save dangling edits in tmp-file
+     CLOSED: [2013-02-16 Sa 02:28]
+     :LOGBOOK:
+     - State "DONE"       from "TODO"       [2013-02-16 Sa 02:28]
+     :END:
      [2013-02-13 Mi 01:44]
-**** TODO reset-global-vars
+**** DONE reset-global-vars
+     CLOSED: [2013-02-16 Sa 02:28]
+     :LOGBOOK:
+     - State "DONE"       from "TODO"       [2013-02-16 Sa 02:28]
+     :END:
      [2013-02-13 Mi 01:45]
 ** DONE fix bug eob when last line was line of code (conversion to org)
    CLOSED: [2013-02-14 Do 17:11]
