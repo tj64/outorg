@@ -15,7 +15,11 @@
    - State "DONE"       from "TODO"       [2013-02-16 Sa 02:34]
    :END:
    [2013-02-16 Sa 02:29]
-** TODO fix issue with indented comments when 'comment-region' is applied to indented text.
+** DONE fix issue with indented comments when 'comment-region' is applied to indented text.
+   CLOSED: [2013-02-16 Sa 14:09]
+   :LOGBOOK:
+   - State "DONE"       from "TODO"       [2013-02-16 Sa 14:09]
+   :END:
    [2013-02-16 Sa 02:26]
 ** DONE fix double insertion bug (when edit-buffer killed without saving??)
    CLOSED: [2013-02-16 Sa 02:28]
@@ -23,7 +27,11 @@
    - State "DONE"       from "TODO"       [2013-02-16 Sa 02:28]
    :END:
    [2013-02-14 Do 17:37]
-** TODO add special marker to narrowed buffers to remember point-position
+** DONE add special marker to narrowed buffers to remember point-position
+   CLOSED: [2013-02-16 Sa 20:29]
+   :LOGBOOK:
+   - State "DONE"       from "TODO"       [2013-02-16 Sa 20:29]
+   :END:
    [2013-02-14 Do 17:18]
 ** DONE add persistent header line to edit-buffer
    CLOSED: [2013-02-14 Do 17:18]

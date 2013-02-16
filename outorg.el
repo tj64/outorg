@@ -149,11 +149,11 @@ first line of the window showing the editing buffer."
   (let ((msg "Exit with C-c ' (C-c and single quote)"))
     (org-add-hook 'kill-buffer-hook
                   'outorg-save-edits-to-tmp-file nil 'local)
-    (setq buffer-offer-save t)
+    ;; (setq buffer-offer-save t)
     (and outorg-edit-buffer-persistent-message
          (org-set-local 'header-line-format msg))
     ;; (setq buffer-file-name
-    ;;       (concat (buffer-file-name (marker-buffer outorg-code-buffer-marker))
+    ;;       (concat (buffer-file-name (marker-buffer outorg-code-buffer-point-marker))
     ;;               "[" (buffer-name) "]"))
     (if (featurep 'xemacs)
         (progn
@@ -239,27 +239,25 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
     ;; switch to edit buffer
     (if (one-window-p) (split-window-sensibly (get-buffer-window)))
     (switch-to-buffer-other-window edit-buffer)
-    (and outorg-edit-whole-buffer-p
-         (goto-char
-          (marker-position outorg-code-buffer-marker)))
-    (setq outorg-edit-buffer-marker (point-marker))
-  ;; activate programming language major mode and convert to org
-  (funcall (outorg-get-buffer-mode
-            (marker-buffer outorg-code-buffer-marker)))
-  (outorg-convert-to-org)
-  ;; change major mode to org-mode
-  (org-mode)
-  (outorg-edit-mode)
-  (if outorg-edit-whole-buffer-p
-      (progn
-        (org-first-headline-recenter)
-        (hide-sublevels 3)
-        (goto-char
-         (marker-position outorg-edit-buffer-marker))
-        (show-subtree))
+    ;; set point
     (goto-char
-     (marker-position outorg-edit-buffer-marker))
-    (show-all))))
+     (if outorg-edit-whole-buffer-p
+         (marker-position outorg-code-buffer-point-marker)
+       (1+ (- (marker-position outorg-code-buffer-point-marker)
+          (marker-position outorg-code-buffer-beg-of-subtree-marker)))))
+    ;; activate programming language major mode and convert to org
+    (funcall (outorg-get-buffer-mode
+              (marker-buffer outorg-code-buffer-point-marker)))
+    (outorg-convert-to-org)
+    ;; change major mode to org-mode
+    (org-mode)
+    ;; activate minor mode outorg-edit-mode
+    (outorg-edit-mode)
+    ;; set outline visibility
+    (if (not outorg-edit-whole-buffer-p)
+        (show-all)
+      (hide-sublevels 3)
+      (show-subtree))))
 
 (defun outorg-convert-to-org ()
   "Convert file content to Org Syntax"
@@ -267,7 +265,7 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
          (mode-name
           (format
            "%S" (with-current-buffer
-                    (marker-buffer outorg-code-buffer-marker)
+                    (marker-buffer outorg-code-buffer-point-marker)
                   major-mode)))
          (splitted-mode-name
           (split-string mode-name "-mode"))
@@ -279,119 +277,123 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
           (assq
            (intern language-name)
            org-babel-load-languages)))
-    (goto-char (point-min))
-    (outorg-remove-trailing-blank-lines)
-    (while (not (eobp))
-      (cond
-       ;; empty line (do nothing)
-       ((looking-at "^[[:space:]]*$"))
-       ;; comment line after comment line or at
-       ;; beginning of buffer
-       ((and
-         (save-excursion
-           (eq (comment-on-line-p) (point-at-bol)))
-         (or (bobp) last-line-comment-p))
-        (uncomment-region (point-at-bol) (point-at-eol))
-        (setq last-line-comment-p t))
-       ;; line of code after comment line
-       ((and
-         (save-excursion
-           (not (eq (comment-on-line-p) (point-at-bol))))
-         last-line-comment-p)
-        (newline)
-        (forward-line -1)
-        (insert
-         (if in-org-babel-load-languages-p
-             (concat "#+begin_src " language-name)
-           "#+begin_example"))
-        (forward-line)
-        (setq last-line-comment-p nil))
-       ;; comment line after line of code
-       ((and
-         (save-excursion
-           (eq (comment-on-line-p) (point-at-bol)))
-         (not last-line-comment-p))
-        (uncomment-region (point-at-bol) (point-at-eol))
-        (save-excursion
+    (save-excursion
+      (goto-char (point-min))
+      (outorg-remove-trailing-blank-lines)
+      (while (not (eobp))
+        (cond
+         ;; empty line (do nothing)
+         ((looking-at "^[[:space:]]*$"))
+         ;; comment line after comment line or at
+         ;; beginning of buffer
+         ((and
+           (save-excursion
+             (eq (comment-on-line-p) (point-at-bol)))
+           (or (bobp) last-line-comment-p))
+          (uncomment-region (point-at-bol) (point-at-eol))
+          (setq last-line-comment-p t))
+         ;; line of code after comment line
+         ((and
+           (save-excursion
+             (not (eq (comment-on-line-p) (point-at-bol))))
+           last-line-comment-p)
+          (newline)
           (forward-line -1)
+          (insert
+           (if in-org-babel-load-languages-p
+               (concat "#+begin_src " language-name)
+             "#+begin_example"))
+          (forward-line)
+          (setq last-line-comment-p nil))
+         ;; comment line after line of code
+         ((and
+           (save-excursion
+             (eq (comment-on-line-p) (point-at-bol)))
+           (not last-line-comment-p))
+          (uncomment-region (point-at-bol) (point-at-eol))
+          (save-excursion
+            (forward-line -1)
+            (unless (looking-at "^[[:space:]]*$")
+              (newline))
+            (if in-org-babel-load-languages-p
+                (insert "#+end_src")
+              (insert "#+end_example"))
+            (newline))
+          (setq last-line-comment-p t))
+         ;; last line after line of code
+         ((and
+           (eq (line-number-at-pos)
+               (1- (count-lines (point-min) (point-max))))
+           (not last-line-comment-p))
+          (goto-char (point-max))
           (unless (looking-at "^[[:space:]]*$")
             (newline))
           (if in-org-babel-load-languages-p
               (insert "#+end_src")
             (insert "#+end_example"))
           (newline))
-        (setq last-line-comment-p t))
-       ;; last line after line of code
-       ((and
-         (eq (line-number-at-pos)
-             (1- (count-lines (point-min) (point-max))))
-         (not last-line-comment-p))
-        (goto-char (point-max))
-        (unless (looking-at "^[[:space:]]*$")
-          (newline))
-        (if in-org-babel-load-languages-p
-            (insert "#+end_src")
-          (insert "#+end_example"))
-        (newline))
-       ;; line of code after line of code
-       (t (setq last-line-comment-p nil)))
-      (progn
-        (forward-line)
-        (and (eobp)
-             (looking-at "^[[:space:]]*$")
-             (not last-line-comment-p)
-             (if in-org-babel-load-languages-p
-                 (insert "#+end_src")
-               (insert "#+end_example")))))))
+         ;; line of code after line of code
+         (t (setq last-line-comment-p nil)))
+        ;; continue loop
+        (progn
+          (forward-line)
+          (and (eobp)
+               (looking-at "^[[:space:]]*$")
+               (not last-line-comment-p)
+               (if in-org-babel-load-languages-p
+                   (insert "#+end_src")
+                 (insert "#+end_example"))))))))
 
 (defun outorg-convert-back-to-code ()
   "Convert edit-buffer content back to programming language syntax.
 Assume that edit-buffer major-mode has been set back to the
   programming-language major-mode of the associated code-buffer
   before this function is called."
-  (let* ((inside-code-or-example-block-p nil))
-    (goto-char (point-min))
-    (while (not (eobp))
-      (cond
-       ;; empty line (do nothing)
-       ((looking-at "^[[:space:]]*$"))
-       ;; begin code/example block
-       ((looking-at "^[ \t]*#\\+begin_?")
-        (kill-whole-line)
-        (forward-line -1)
-        (setq inside-code-or-example-block-p t))
-       ;; end code/example block
-       ((looking-at "^[ \t]*#\\+end_?")
-        (kill-whole-line)
-        (forward-line -1)
-        (setq inside-code-or-example-block-p nil))
-       ;; line inside code/example block (do nothing)
-       (inside-code-or-example-block-p)
-       ;; not-empty line outside code/example block
-       (t (comment-region (point-at-bol) (point-at-eol))))
-      (forward-line))))
+  (let ((inside-code-or-example-block-p nil)
+        (comment-style "plain"))
+    (save-excursion
+      (goto-char (point-min))
+      (while (not (eobp))
+        (cond
+         ;; empty line (do nothing)
+         ((looking-at "^[[:space:]]*$"))
+         ;; begin code/example block
+         ((looking-at "^[ \t]*#\\+begin_?")
+          (kill-whole-line)
+          (forward-line -1)
+          (setq inside-code-or-example-block-p t))
+         ;; end code/example block
+         ((looking-at "^[ \t]*#\\+end_?")
+          (kill-whole-line)
+          (forward-line -1)
+          (setq inside-code-or-example-block-p nil))
+         ;; line inside code/example block (do nothing)
+         (inside-code-or-example-block-p)
+         ;; not-empty line outside code/example block
+         (t (comment-region (point-at-bol) (point-at-eol))))
+        (forward-line)))))
 
 (defun outorg-replace-code-with-edits ()
   "Replace code-buffer contents with edits."
   (let* ((edit-buf (marker-buffer outorg-edit-buffer-marker))
-         (code-buf (marker-buffer outorg-code-buffer-marker))
+         (code-buf (marker-buffer outorg-code-buffer-point-marker))
          (edit-buf-point-min
           (with-current-buffer edit-buf
             (point-min)))
          (edit-buf-point-max
           (with-current-buffer edit-buf
-            (goto-char (point-max))
-            (unless (and (bolp) (looking-at "^$"))
-              (newline))
-            (point))))
+            (save-excursion
+              (goto-char (point-max))
+              (unless (and (bolp) (looking-at "^[ \t]*$"))
+                (newline))
+              (point)))))
     (with-current-buffer code-buf
       (if outorg-edit-whole-buffer-p
           (progn
             (erase-buffer)
             (insert-buffer-substring-no-properties
-             edit-buf edit-buf-point-min edit-buf-point-max)
-            ;; (goto-char (marker-position outorg-edit-buffer-marker))
-            )
+             edit-buf edit-buf-point-min edit-buf-point-max))
+        (goto-char (marker-position outorg-code-buffer-point-marker))
         (save-restriction
           (narrow-to-region
            (save-excursion
@@ -402,13 +404,14 @@ Assume that edit-buffer major-mode has been set back to the
              (point)))
           (delete-region (point-min) (point-max))
           (insert-buffer-substring-no-properties
-           edit-buf edit-buf-point-min edit-buf-point-max)))
-      ;; (save-buffer) 
-      )))
+           edit-buf edit-buf-point-min edit-buf-point-max))
+        ;; (save-buffer) 
+        ))))
 
 (defun outorg-reset-global-vars ()
   "Reset some global vars defined by outorg to initial values."
-  (set-marker outorg-code-buffer-marker nil)
+  (set-marker outorg-code-buffer-point-marker nil)
+  (set-marker outorg-code-buffer-beg-of-subtree-marker nil)
   (set-marker outorg-edit-buffer-marker nil)
   (setq outorg-edit-whole-buffer-p nil)
   (setq outorg-initial-window-config nil))
@@ -436,7 +439,10 @@ Assume that edit-buffer major-mode has been set back to the
   "Convert and copy to temporary Org buffer
 With ARG, edit the whole buffer, otherwise the current subtree."
   (interactive "P")
-  (setq outorg-code-buffer-marker (point-marker))
+  (setq outorg-code-buffer-point-marker (point-marker))
+  (save-excursion
+    (outline-back-to-heading 'INVISIBLE-OK)
+    (setq outorg-code-buffer-beg-of-subtree-marker (point-marker)))
   (and arg (setq outorg-edit-whole-buffer-p t))
   (setq outorg-initial-window-config
         (current-window-configuration))
@@ -449,17 +455,24 @@ With ARG, edit the whole buffer, otherwise the current subtree."
   (widen)
   (funcall
    (outorg-get-buffer-mode
-    (marker-buffer outorg-code-buffer-marker)))
+    (marker-buffer outorg-code-buffer-point-marker)))
+  (setq outorg-edit-buffer-marker (point-marker))
   (outorg-convert-back-to-code)
   (outorg-replace-code-with-edits)
-  (kill-buffer
-   (marker-buffer outorg-edit-buffer-marker))
   (set-window-configuration
    outorg-initial-window-config)
+  (if outorg-edit-whole-buffer-p
+      (goto-char (marker-position outorg-edit-buffer-marker))
+    (goto-char (1- (+ (marker-position
+                       outorg-edit-buffer-marker)
+                      (marker-position
+                       outorg-code-buffer-beg-of-subtree-marker)))))
+  (kill-buffer
+   (marker-buffer outorg-edit-buffer-marker))
   ;; (switch-to-buffer
-  ;;  (marker-buffer outorg-code-buffer-marker))
+  ;;  (marker-buffer outorg-code-buffer-point-marker))
   ;; (goto-char
-  ;;  (marker-position outorg-code-buffer-marker))
+  ;;  (marker-position outorg-code-buffer-point-marker))
   (outorg-reset-global-vars))
 
 ;; * Keybindings.
