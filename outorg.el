@@ -335,7 +335,14 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
         (newline))
        ;; line of code after line of code
        (t (setq last-line-comment-p nil)))
-      (forward-line))))
+      (progn
+        (forward-line)
+        (and (eobp)
+             (looking-at "^[[:space:]]*$")
+             (not last-line-comment-p)
+             (if in-org-babel-load-languages-p
+                 (insert "#+end_src")
+               (insert "#+end_example")))))))
 
 (defun outorg-convert-back-to-code ()
   "Convert edit-buffer content back to programming language syntax.

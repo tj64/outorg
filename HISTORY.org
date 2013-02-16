@@ -7,7 +7,13 @@
 
 * NEXT Version 1.0
 
-** TODO rename outorg2 to outorg and (old) outorg to old-outorg.
+** TODO work out the edit-buffer and tmp-file naming scheme
+   [2013-02-16 Sa 02:35]
+** DONE rename outorg2 to outorg and (old) outorg to old-outorg.
+   CLOSED: [2013-02-16 Sa 02:34]
+   :LOGBOOK:
+   - State "DONE"       from "TODO"       [2013-02-16 Sa 02:34]
+   :END:
    [2013-02-16 Sa 02:29]
 ** TODO fix issue with indented comments when 'comment-region' is applied to indented text.
    [2013-02-16 Sa 02:26]
