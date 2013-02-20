@@ -7,7 +7,25 @@
 
 * NEXT Version 1.0
 
-** TODO work out the edit-buffer and tmp-file naming scheme
+** TODO check headline not uncommented bug in html
+   [2013-02-20 Mi 14:47]
+** TODO check with java
+   [2013-02-16 Sa 23:40]
+** TODO check with C
+   [2013-02-16 Sa 23:40]
+** TODO check with R
+   [2013-02-16 Sa 23:39]
+** TODO check with html
+   [2013-02-16 Sa 23:39]
+** TODO check with latex
+   [2013-02-16 Sa 23:39]
+** TODO keybindings for commands
+   [2013-02-16 Sa 23:25]
+** DONE work out the edit-buffer and tmp-file naming scheme
+   CLOSED: [2013-02-16 Sa 23:25]
+   :LOGBOOK:
+   - State "DONE"       from "TODO"       [2013-02-16 Sa 23:25]
+   :END:
    [2013-02-16 Sa 02:35]
 ** DONE rename outorg2 to outorg and (old) outorg to old-outorg.
    CLOSED: [2013-02-16 Sa 02:34]
@@ -22,8 +40,10 @@
    :END:
    [2013-02-16 Sa 02:26]
 ** DONE fix double insertion bug (when edit-buffer killed without saving??)
-   CLOSED: [2013-02-16 Sa 02:28]
+   CLOSED: [2013-02-20 Mi 17:56]
    :LOGBOOK:
+   - State "DONE"       from "TODO"       [2013-02-20 Mi 17:56]
+   - State "TODO"       from "DONE"       [2013-02-20 Mi 14:48]
    - State "DONE"       from "TODO"       [2013-02-16 Sa 02:28]
    :END:
    [2013-02-14 Do 17:37]

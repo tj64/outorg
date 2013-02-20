@@ -308,6 +308,8 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
 
 (defun outorg-convert-to-org ()
   "Convert file content to Org Syntax"
+  (message "Entering outorg-convert-to-org....")
+  (message "%s" major-mode)
   (let* ((last-line-comment-p nil)
          (mode-name
           (format
@@ -380,13 +382,17 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
             (insert "#+end_example"))
           (newline))
          ;; line of code after line of code
-         (t (setq last-line-comment-p nil)))
+         (t
+          (setq last-line-comment-p nil)))
         ;; continue loop
         (progn
           (forward-line)
           (and (eobp)
                (looking-at "^[[:space:]]*$")
                (not last-line-comment-p)
+               (save-excursion
+                 (forward-line -1)
+                  (not (looking-at "^[ \t]*#\\+end_?")))
                (if in-org-babel-load-languages-p
                    (insert "#+end_src")
                  (insert "#+end_example"))))))))
@@ -458,7 +464,7 @@ Assume that edit-buffer major-mode has been set back to the
 ;; ** Commands
 ;; *** Edit as Org 
 
-(defun outorg-edit-as-org (arg)
+(defun outorg-edit-as-org (&optional arg)
   "Convert and copy to temporary Org buffer
 With ARG, edit the whole buffer, otherwise the current subtree."
   (interactive "P")
