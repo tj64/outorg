@@ -472,6 +472,8 @@ Assume that edit-buffer major-mode has been set back to the
   "Convert and copy to temporary Org buffer
 With ARG, edit the whole buffer, otherwise the current subtree."
   (interactive "P")
+  (and buffer-file-read-only
+       (error "Cannor edit read-only buffer-file"))
   (and buffer-read-only
        (if (not (y-or-n-p "Buffer is read-only - make writable "))
            (error "Cannot edit read-only buffer")
