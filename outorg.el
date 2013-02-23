@@ -80,6 +80,9 @@
 (defvar outorg-initial-window-config nil
   "Initial window-configuration when editing as Org.") 
 
+(defvar outorg-code-buffer-read-only-p nil
+  "Remember if code-buffer was read only before editing")
+
 ;; copied and adapted from ob-core.el
 (defvar outorg-temporary-directory)    ; FIXME why this duplication?
 (unless (or noninteractive (boundp 'outorg-temporary-directory))
@@ -238,7 +241,8 @@ of `outorg-temporary-directory'."
   (set-marker outorg-code-buffer-beg-of-subtree-marker nil)
   (set-marker outorg-edit-buffer-marker nil)
   (setq outorg-edit-whole-buffer-p nil)
-  (setq outorg-initial-window-config nil))
+  (setq outorg-initial-window-config nil)
+  (setq outorg-code-buffer-read-only-p nil))
 
 ;; *** Remove Trailing Blank Lines
 
@@ -468,6 +472,11 @@ Assume that edit-buffer major-mode has been set back to the
   "Convert and copy to temporary Org buffer
 With ARG, edit the whole buffer, otherwise the current subtree."
   (interactive "P")
+  (and buffer-read-only
+       (if (not (y-or-n-p "Buffer is read-only - make writable "))
+           (error "Cannot edit read-only buffer")
+         (setq inhibit-read-only t)
+         (setq outorg-code-buffer-read-only-p t)))
   (setq outorg-code-buffer-point-marker (point-marker))
   (save-excursion
     (outline-back-to-heading 'INVISIBLE-OK)
@@ -504,6 +513,8 @@ With ARG, edit the whole buffer, otherwise the current subtree."
   ;;  (marker-buffer outorg-code-buffer-point-marker))
   ;; (goto-char
   ;;  (marker-position outorg-code-buffer-point-marker))
+  (and outorg-code-buffer-read-only-p
+       (setq inhibit-read-only nil))
   (outorg-reset-global-vars))
 
 ;; * Keybindings.
