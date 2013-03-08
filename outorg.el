@@ -312,8 +312,6 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
 
 (defun outorg-convert-to-org ()
   "Convert file content to Org Syntax"
-  (message "Entering outorg-convert-to-org....")
-  (message "%s" major-mode)
   (let* ((last-line-comment-p nil)
          (mode-name
           (format
