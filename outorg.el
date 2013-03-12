@@ -3,9 +3,29 @@
 ;; ** Copyright
 
 ;; Copyright (C) 2013 Thorsten Jolitz
-;; This file is not (yet) part of GNU Emacs
 
-;; Author: Thorsten Jolitz  (format "tjolitz%sgmail%s" "@" ".com")
+;; Author: Thorsten Jolitz <tjolitz AT gmail DOT com>
+;; Maintainer: Thorsten Jolitz <tjolitz AT gmail DOT com>
+;; Version: 0.9
+;; Created: 11th February 2013
+;; Keywords: outlines, org-mode, editing
+
+;; ** Licence
+
+;; This file is NOT (yet) part of GNU Emacs.
+
+;; This program is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the Free
+;; Software Foundation, either version 3 of the License, or (at your option)
+;; any later version.
+
+;; This program is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+;; more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ;; ** Credits
 
@@ -14,35 +34,42 @@
 
 ;; ** Commentary
 
+;; *** About outorg
+
 ;; `outorg' is like "reverse Org-Babel": editing of comment-sections from source
 ;; code files in temporary Org-mode buffers instead of editing of Org-mode
 ;; source-blocks in temporary source-code buffers. 
 
-;; It is higly recommended to use `outline-minor-mode', `outxxtra.el' and
-;; `outline-magic.el' for outline navigation and structure editing in your
-;; source-code buffers. Alternatively, `orgstruct++-mode' might be used. Keep
-;; in mind, that `outorg' only works with outlines like those produced by
-;; using `comment-region' in your source-code buffer on Org-mode style
-;; headlines. Take this file as an example for suitable outline headlines in
-;; an Emacs Lisp buffer. In other major-modes, the `comment-start' character
-;; ';' of Emacs Lisp would be replaced by that of the respective major-mode,
-;; e.g. '#' in PicoLisp mode or '%' in LaTeX mode.
+;; It should be used together with `outline-minor-mode' and `outshine.el'. Keep
+;; in mind, that `outorg' only works with outshine-style headlines like those
+;; produced by calling `comment-region' on Org-mode style headlines in a
+;; source-code buffer. Take this file as an example for suitable outline
+;; headlines in an Emacs Lisp buffer. In other major-modes, the `comment-start'
+;; character ';' of Emacs Lisp would be replaced by that of the respective
+;; major-mode, e.g. '#' in PicoLisp mode or '%' in LaTeX mode.
 
-;; ** Emacs Version
+;; *** Installation
+
+;; Insert
+
+;; ;; #+begin_src emacs-lisp
+;; ;;  (require 'outorg)
+;; ;; #+end_src
+
+;; *** Bugs and Shortcomings
+
+;; `outorg' is line-based, it only works with 'one-line' comments, i.e. with
+;; comment-sections like those produced by `comment-region' (a command that
+;; comments or uncomments each line in the region). Those special multi-line
+;; comments found in many programming languages are not recognized and lead to
+;; undefined behaviour.
+
+;; *** Emacs Version
 
 ;; `outorg.el' works with [GNU Emacs 24.2.1 (x86_64-unknown-linux-gnu, GTK+
 ;; Version 3.6.4) of 2013-01-20 on eric]. No attempts of testing with older
 ;; versions or other types of Emacs have been made (yet).
 
-;; ** Installation
-
-;; Insert
-;; (require 'outorg)
-;; in your .emacs file to install.  If you want a different prefix
-;; key, insert first
-;; (defvar outline-minor-mode-prefix "\C-c")
-;; or whatever.  The prefix can only be changed before outline (minor)
-;; mode is loaded.
 
 ;; ** ChangeLog
 
@@ -50,13 +77,6 @@
 ;; |-----------------+-----------------+---------|
 ;; | <2013-02-11 Mo> | Thorsten Jolitz |     0.9 |
 
-;; ** Bugs
-
-;; `outorg' is line-based, it only works with 'one-line' comments, i.e. with
-;; comment-sections like those produced by `comment-region' (a command that
-;; comments or uncomments each line in the region). Those special multi-line
-;; comments found in many programming languages are not recognized and lead to
-;; undefined behaviour.
 
 ;; * Requires
 
