@@ -33,7 +33,6 @@
 ;; edit files in Org-mode (see http://orgmode.org/worg/org-contrib/babel/).
 
 ;; ** Commentary
-
 ;; *** About outorg
 
 ;; `outorg' is like "reverse Org-Babel": editing of comment-sections from source
@@ -48,6 +47,15 @@
 ;; character ';' of Emacs Lisp would be replaced by that of the respective
 ;; major-mode, e.g. '#' in PicoLisp mode or '%' in LaTeX mode.
 
+;; `outorgs' main command is
+
+;; ,------
+;; | C-c '
+;; `------
+
+;; used for both 'outorg-edit-as-org' (in the source-code buffer) and
+;; 'outorg-copy-edits-and-exit' (in the edit-buffer).
+
 ;; *** Installation
 
 ;; Insert
@@ -55,6 +63,8 @@
 ;; ;; #+begin_src emacs-lisp
 ;; ;;  (require 'outorg)
 ;; ;; #+end_src
+
+;; in your .emacs.                         
 
 ;; *** Bugs and Shortcomings
 
@@ -76,7 +86,6 @@
 ;; | date            | author(s)       | version |
 ;; |-----------------+-----------------+---------|
 ;; | <2013-02-11 Mo> | Thorsten Jolitz |     0.9 |
-
 
 ;; * Requires
 
