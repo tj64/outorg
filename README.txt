@@ -79,12 +79,23 @@ _________________
 
   `outorgs' main command is
 
-  ,------
-  | C-c '
-  `------
+  ,---------------------------
+  C-c ' (outorg-edit-as-org)
+  `---------------------------
 
-  used for both 'outorg-edit-as-org' (in the source-code buffer) and
-  'outorg-copy-edits-and-exit' (in the edit-buffer).
+  used in source-code buffers where `outline-minor-mode' is activated
+  with `outshine' extensions. The Org-mode edit-buffer popped up by this
+  command has `outorg-edit-mode' activated, a minor-mode with only 2
+  commands:
+
+  ,----------------------------------------
+  M-# (outorg-copy-edits-and-exit)
+  C-x C-s (outorg-save-edits-to-tmp-file)
+  `----------------------------------------
+
+  If you want to insert Org-mode source-code or example blocks in
+  comment-sections, simply outcomment them in the outorg-edit buffer
+  before calling `outorg-copy-edits-and-exit'.
 
 
 1.4.2 Installation
