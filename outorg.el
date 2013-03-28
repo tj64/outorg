@@ -119,6 +119,10 @@ There is a mode hook, and two commands:
 
 ;; ** Vars
 
+(defvar outorg-edit-minor-mode nil
+  "Minor mode variable")
+;; (make-variable-buffer-local 'outorg-edit-minor-mode) 
+
 (defvar outline-minor-mode-prefix "\C-c"
   "New outline-minor-mode prefix.")
 
@@ -186,7 +190,7 @@ first line of the window showing the editing buffer."
 ;; *** Configure Edit Buffer
 
 ;; copied and adapted from org-src.el
-(defun outorg-edit-minor-mode-configure-buffer ()
+(defun outorg-edit-configure-buffer ()
   "Configure edit buffer"
   (let ((msg
          (concat "[ "
@@ -214,8 +218,10 @@ first line of the window showing the editing buffer."
     ;; (setq buffer-read-only t) ; why?
     ))
 
+
+;; (org-add-hook 'outorg-edit-minor-mode-hook 'outorg-edit-minor-mode)
 (org-add-hook 'outorg-edit-minor-mode-hook
-              'outorg-edit-minor-mode-configure-buffer)
+              'outorg-edit-configure-buffer)
 
 ;; *** Backup Edit Buffer
 
@@ -505,6 +511,13 @@ Assume that edit-buffer major-mode has been set back to the
 
 ;; ** Commands
 
+(defun outorg-edit-minor-mode (&optional arg)
+  "Minor-mode command"
+  (interactive)
+  (setq outorg-edit-minor-mode
+      (if (null arg) (not outorg-edit-minor-mode)
+        (> (prefix-numeric-value arg) 0))))
+
 (defun outorg-edit-as-org (&optional arg)
   "Convert and copy to temporary Org buffer
 With ARG, edit the whole buffer, otherwise the current subtree."
@@ -579,9 +592,13 @@ With ARG, edit the whole buffer, otherwise the current subtree."
       'outorg-copy-edits-and-exit)
     (define-key map "\C-x\C-s"
       'outorg-save-edits-to-tmp-file)
-    (define-key map [menu-bar]
+    (define-key map [menu-bar outorg-edit]
       (cons (purecopy "Outorg-Edit") outorg-edit-menu-map))
     map))
+
+(add-to-list 'minor-mode-map-alist
+             (cons 'outorg-edit-minor-mode
+                   outorg-edit-minor-mode-map))
 
 ;; * Run' hooks and provide
 
