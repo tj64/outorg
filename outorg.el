@@ -119,10 +119,6 @@ There is a mode hook, and two commands:
 
 ;; ** Vars
 
-(defvar outorg-edit-minor-mode nil
-  "Minor mode variable")
-;; (make-variable-buffer-local 'outorg-edit-minor-mode) 
-
 (defvar outline-minor-mode-prefix "\C-c"
   "New outline-minor-mode prefix.")
 
@@ -192,6 +188,7 @@ first line of the window showing the editing buffer."
 ;; copied and adapted from org-src.el
 (defun outorg-edit-configure-buffer ()
   "Configure edit buffer"
+  (message "'outorg-edit-configure-buffer' entered")
   (let ((msg
          (concat "[ "
                  (buffer-name
@@ -511,13 +508,6 @@ Assume that edit-buffer major-mode has been set back to the
 
 ;; ** Commands
 
-(defun outorg-edit-minor-mode (&optional arg)
-  "Minor-mode command"
-  (interactive)
-  (setq outorg-edit-minor-mode
-      (if (null arg) (not outorg-edit-minor-mode)
-        (> (prefix-numeric-value arg) 0))))
-
 (defun outorg-edit-as-org (&optional arg)
   "Convert and copy to temporary Org buffer
 With ARG, edit the whole buffer, otherwise the current subtree."
@@ -593,7 +583,7 @@ With ARG, edit the whole buffer, otherwise the current subtree."
     (define-key map "\C-x\C-s"
       'outorg-save-edits-to-tmp-file)
     (define-key map [menu-bar outorg-edit]
-      (cons (purecopy "Outorg-Edit") outorg-edit-menu-map))
+      (cons (purecopy "Outorg") outorg-edit-menu-map))
     map))
 
 (add-to-list 'minor-mode-map-alist
