@@ -188,7 +188,6 @@ first line of the window showing the editing buffer."
 ;; copied and adapted from org-src.el
 (defun outorg-edit-configure-buffer ()
   "Configure edit buffer"
-  (message "'outorg-edit-configure-buffer' entered")
   (let ((msg
          (concat "[ "
                  (buffer-name
