@@ -161,7 +161,8 @@ Emacs shutdown."))
   "Library for outline navigation and Org-mode editing in Lisp buffers."
   :prefix "outorg-"
   :group 'lisp 
-  :link '(url-link "http://emacswiki.org/emacs/OutlineMinorMode"))
+  :link '(url-link
+          "http://orgmode.org/worg/org-tutorials/org-outside-org.html"))
 
 ;; *** Custom Vars
 
