@@ -1,36 +1,16 @@
 ;; * outorg.el --- Org-style comment editing
-
-;; ** Copyright
-
-;; Copyright (C) 2013 Thorsten Jolitz
-
-;; Author: Thorsten Jolitz <tjolitz AT gmail DOT com>
-;; Maintainer: Thorsten Jolitz <tjolitz AT gmail DOT com>
-;; Version: 0.9
-;; Created: 11th February 2013
-;; Keywords: outlines, org-mode, editing
-
-;; ** Licence
-
-;; This file is NOT (yet) part of GNU Emacs.
-
-;; This program is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by the Free
-;; Software Foundation, either version 3 of the License, or (at your option)
-;; any later version.
-
-;; This program is distributed in the hope that it will be useful, but WITHOUT
-;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-;; FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-;; more details.
-
-;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-;; ** Credits
-
-;; This library is inspired by the way source-blocks can be edited in temporary
-;; edit files in Org-mode (see http://orgmode.org/worg/org-contrib/babel/).
+;;   :PROPERTIES:
+;;   :copyright: Thorsten Jolitz
+;;   :copyright-years: 2013
+;;   :version:  0.9
+;;   :licence:  GPL 2 or later (free software)
+;;   :licence-url: http://www.gnu.org/licenses/
+;;   :part-of-emacs: no
+;;   :author: Thorsten Jolitz
+;;   :author_email: tjolitz AT gmail DOT com
+;;   :inspiration:  org-src
+;;   :keywords: emacs org-mode comment-editing
+;;   :END:
 
 ;; ** Commentary
 ;; *** About outorg
