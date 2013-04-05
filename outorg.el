@@ -570,7 +570,7 @@ With ARG, edit the whole buffer, otherwise the current subtree."
              (cons 'outorg-edit-minor-mode
                    outorg-edit-minor-mode-map))
 
-;; * Run' hooks and provide
+;; * Run hooks and provide
 
 (run-hooks 'outorg-hook)
 
