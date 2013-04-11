@@ -54,7 +54,7 @@
 ;; ;;  (require 'outorg)
 ;; ;; #+end_src
 
-;; in your .emacs.                         
+;; in your .emacs.
 
 ;; *** Bugs and Shortcomings
 
@@ -158,6 +158,14 @@ first line of the window showing the editing buffer."
 ;; * Functions
 ;; ** Non-interactive Functions
 ;; *** Get Source Buffer Mode
+
+;; copied from http://www.emacswiki.org/emacs/basic-edit-toolkit.el
+(defun outorg-comment-on-line-p ()
+  "Whether have comment part on current line.
+If have comment return COMMENT-START, otherwise return nil."
+  (save-excursion
+    (beginning-of-line)
+    (comment-search-forward (line-end-position) t)))
 
 (defun outorg-get-buffer-mode (buffer-or-string)
   "Return major mode of BUFFER-OR-STRING."
@@ -362,14 +370,14 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
          ;; beginning of buffer
          ((and
            (save-excursion
-             (eq (comment-on-line-p) (point-at-bol)))
+             (eq (outorg-comment-on-line-p) (point-at-bol)))
            (or (bobp) last-line-comment-p))
           (uncomment-region (point-at-bol) (point-at-eol))
           (setq last-line-comment-p t))
          ;; line of code after comment line
          ((and
            (save-excursion
-             (not (eq (comment-on-line-p) (point-at-bol))))
+             (not (eq (outorg-comment-on-line-p) (point-at-bol))))
            last-line-comment-p)
           (newline)
           (forward-line -1)
@@ -382,7 +390,7 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
          ;; comment line after line of code
          ((and
            (save-excursion
-             (eq (comment-on-line-p) (point-at-bol)))
+             (eq (outorg-comment-on-line-p) (point-at-bol)))
            (not last-line-comment-p))
           (uncomment-region (point-at-bol) (point-at-eol))
           (save-excursion
