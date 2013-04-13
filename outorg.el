@@ -123,6 +123,8 @@ There is a mode hook, and two commands:
 Used by `org-babel-temp-file'.  This directory will be removed on
 Emacs shutdown."))
 
+(defvar outorg-oldschool-elisp-headers-p nil
+  "Non-nil if an Emacs Lisp file uses oldschool headers ';;;+'")
 
 ;; ** Hooks
 
@@ -266,6 +268,7 @@ of `outorg-temporary-directory'."
 
 ;; *** Reset Global Vars
 
+;; TODO better use buffer-local variables instead?
 (defun outorg-reset-global-vars ()
   "Reset some global vars defined by outorg to initial values."
   (set-marker outorg-code-buffer-point-marker nil)
@@ -273,7 +276,8 @@ of `outorg-temporary-directory'."
   (set-marker outorg-edit-buffer-marker nil)
   (setq outorg-edit-whole-buffer-p nil)
   (setq outorg-initial-window-config nil)
-  (setq outorg-code-buffer-read-only-p nil))
+  (setq outorg-code-buffer-read-only-p nil)
+  (setq outorg-oldschool-elisp-headers-p nil))
 
 ;; *** Remove Trailing Blank Lines
 
@@ -372,7 +376,22 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
            (save-excursion
              (eq (outorg-comment-on-line-p) (point-at-bol)))
            (or (bobp) last-line-comment-p))
-          (uncomment-region (point-at-bol) (point-at-eol))
+          (or
+           ;; deal with oldschool elisp headers
+           (and
+            outorg-oldschool-elisp-headers-p
+            (save-match-data
+              (and
+               (save-excursion
+                 (re-search-forward "^;;;+ " (point-at-eol) 'NOERROR))
+               (let ((elisp-header-level
+                      (- (length (match-string-no-properties 0)) 3)))
+                 (uncomment-region (point-at-bol) (point-at-eol))
+                 (save-excursion
+                   (dotimes (i elisp-header-level) (insert "*"))
+                   (insert " "))))))
+           ;; orgmode-style headers
+           (uncomment-region (point-at-bol) (point-at-eol)))
           (setq last-line-comment-p t))
          ;; line of code after comment line
          ((and
@@ -392,7 +411,22 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
            (save-excursion
              (eq (outorg-comment-on-line-p) (point-at-bol)))
            (not last-line-comment-p))
-          (uncomment-region (point-at-bol) (point-at-eol))
+          (or
+           ;; deal with oldschool elisp headers
+           (and
+            outorg-oldschool-elisp-headers-p
+            (save-match-data
+              (and
+               (save-excursion
+                 (re-search-forward "^;;;+ " (point-at-eol) 'NOERROR))
+               (let ((elisp-header-level
+                      (- (length (match-string-no-properties 0)) 3)))
+                 (uncomment-region (point-at-bol) (point-at-eol))
+                 (save-excursion
+                   (dotimes (i elisp-header-level) (insert "*"))
+                   (insert " "))))))
+           ;; orgmode-style headers
+           (uncomment-region (point-at-bol) (point-at-eol)))
           (save-excursion
             (forward-line -1)
             (unless (looking-at "^[[:space:]]*$")
@@ -425,7 +459,7 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
                (not last-line-comment-p)
                (save-excursion
                  (forward-line -1)
-                  (not (looking-at "^[ \t]*#\\+end_?")))
+                 (not (looking-at "^[ \t]*#\\+end_?")))
                (if in-org-babel-load-languages-p
                    (insert "#+end_src")
                  (insert "#+end_example"))))))))
@@ -494,6 +528,7 @@ Assume that edit-buffer major-mode has been set back to the
         ;; (save-buffer) 
         ))))
 
+
 ;; ** Commands
 
 (defun outorg-edit-as-org (&optional arg)
@@ -512,6 +547,8 @@ With ARG, edit the whole buffer, otherwise the current subtree."
     (outline-back-to-heading 'INVISIBLE-OK)
     (setq outorg-code-buffer-beg-of-subtree-marker (point-marker)))
   (and arg (setq outorg-edit-whole-buffer-p t))
+  (and outshine-enforce-no-comment-padding-p
+       (setq outorg-oldschool-elisp-headers-p t))
   (setq outorg-initial-window-config
         (current-window-configuration))
   (outorg-copy-and-convert))
