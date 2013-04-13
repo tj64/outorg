@@ -376,22 +376,17 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
            (save-excursion
              (eq (outorg-comment-on-line-p) (point-at-bol)))
            (or (bobp) last-line-comment-p))
-          (or
-           ;; deal with oldschool elisp headers
-           (and
-            outorg-oldschool-elisp-headers-p
-            (save-match-data
-              (and
-               (save-excursion
-                 (re-search-forward "^;;;+ " (point-at-eol) 'NOERROR))
-               (let ((elisp-header-level
-                      (- (length (match-string-no-properties 0)) 3)))
-                 (uncomment-region (point-at-bol) (point-at-eol))
-                 (save-excursion
-                   (dotimes (i elisp-header-level) (insert "*"))
-                   (insert " "))))))
-           ;; orgmode-style headers
-           (uncomment-region (point-at-bol) (point-at-eol)))
+          (if (and outorg-oldschool-elisp-headers-p
+                   (looking-at "^;;;+ "))
+              ;; deal with oldschool elisp headers
+              (let ((elisp-header-level
+                     (- (length (match-string-no-properties 0)) 3)))
+                (uncomment-region (point-at-bol) (point-at-eol))
+                (save-excursion
+                  (dotimes (i elisp-header-level) (insert "*"))
+                  (insert " ")))
+            ;; orgmode-style headers
+            (uncomment-region (point-at-bol) (point-at-eol)))
           (setq last-line-comment-p t))
          ;; line of code after comment line
          ((and
@@ -411,22 +406,17 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
            (save-excursion
              (eq (outorg-comment-on-line-p) (point-at-bol)))
            (not last-line-comment-p))
-          (or
-           ;; deal with oldschool elisp headers
-           (and
-            outorg-oldschool-elisp-headers-p
-            (save-match-data
-              (and
-               (save-excursion
-                 (re-search-forward "^;;;+ " (point-at-eol) 'NOERROR))
-               (let ((elisp-header-level
-                      (- (length (match-string-no-properties 0)) 3)))
-                 (uncomment-region (point-at-bol) (point-at-eol))
-                 (save-excursion
-                   (dotimes (i elisp-header-level) (insert "*"))
-                   (insert " "))))))
-           ;; orgmode-style headers
-           (uncomment-region (point-at-bol) (point-at-eol)))
+          (if (and outorg-oldschool-elisp-headers-p
+                   (looking-at "^;;;+ "))
+              ;; deal with oldschool elisp headers
+              (let ((elisp-header-level
+                     (- (length (match-string-no-properties 0)) 3)))
+                (uncomment-region (point-at-bol) (point-at-eol))
+                (save-excursion
+                  (dotimes (i elisp-header-level) (insert "*"))
+                  (insert " ")))
+            ;; orgmode-style headers
+            (uncomment-region (point-at-bol) (point-at-eol)))
           (save-excursion
             (forward-line -1)
             (unless (looking-at "^[[:space:]]*$")
