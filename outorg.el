@@ -490,7 +490,21 @@ Assume that edit-buffer major-mode has been set back to the
          ;; line inside code/example block (do nothing)
          (inside-code-or-example-block-p)
          ;; not-empty line outside code/example block
-         (t (comment-region (point-at-bol) (point-at-eol))))
+         (t
+          (if (and outorg-oldschool-elisp-headers-p
+                   (looking-at "^[*]+ "))
+              ;; deal with oldschool elisp headers (;;;+ )
+              (let* ((org-header-level
+                      (1- (length (match-string-no-properties 0))))
+                     (replacement-string
+                      (let ((strg ";"))
+                        (dotimes (i (1- org-header-level) strg)
+                          (setq strg (concat strg ";"))))))
+                (comment-region (point-at-bol) (point-at-eol))
+                (and
+                 (looking-at "\\(;;\\)\\( [*]+\\)\\( \\)")
+                 (replace-match replacement-string nil nil nil 2)))
+            (comment-region (point-at-bol) (point-at-eol)))))
         (forward-line)))))
 
 (defun outorg-replace-code-with-edits ()
