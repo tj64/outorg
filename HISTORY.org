@@ -5,21 +5,58 @@
 ** TODO change version number (comment and const)
 
 
-* NEXT Version 1.0
+* DONE Version 1.0
+  CLOSED: [2013-05-03 Fr 19:14]
+  :LOGBOOK:
+  - State "DONE"       from "NEXT"       [2013-05-03 Fr 19:14]
+  :END:
 
-** TODO add menu to outorg-edit-buffer
+** DONE add menu to outorg-edit-buffer
+   CLOSED: [2013-05-03 Fr 19:12]
+   :LOGBOOK:
+   - State "DONE"       from "TODO"       [2013-05-03 Fr 19:12]
+   :END:
    [2013-03-19 Di 16:14]
-** TODO check headline not uncommented bug in html
+** DONE check headline not uncommented bug in html
+   CLOSED: [2013-05-03 Fr 19:13]
+   :LOGBOOK:
+   - State "DONE"       from "TODO"       [2013-05-03 Fr 19:13]
+   :END:
    [2013-02-20 Mi 14:47]
-** TODO check with java
+** CANCELLED check with java                                      :CANCELLED:
+   CLOSED: [2013-05-03 Fr 19:13]
+   :LOGBOOK:
+   - State "CANCELLED"  from "TODO"       [2013-05-03 Fr 19:13] \\
+     later
+   :END:
    [2013-02-16 Sa 23:40]
-** TODO check with C
+** CANCELLED check with C                                         :CANCELLED:
+   CLOSED: [2013-05-03 Fr 19:13]
+   :LOGBOOK:
+   - State "CANCELLED"  from "TODO"       [2013-05-03 Fr 19:13] \\
+     later
+   :END:
    [2013-02-16 Sa 23:40]
-** TODO check with R
+** CANCELLED check with R                                         :CANCELLED:
+   CLOSED: [2013-05-03 Fr 19:13]
+   :LOGBOOK:
+   - State "CANCELLED"  from "TODO"       [2013-05-03 Fr 19:13] \\
+     later
+   :END:
    [2013-02-16 Sa 23:39]
-** TODO check with html
+** CANCELLED check with html                                      :CANCELLED:
+   CLOSED: [2013-05-03 Fr 19:13]
+   :LOGBOOK:
+   - State "CANCELLED"  from "TODO"       [2013-05-03 Fr 19:13] \\
+     later
+   :END:
    [2013-02-16 Sa 23:39]
-** TODO check with latex
+** CANCELLED check with latex                                     :CANCELLED:
+   CLOSED: [2013-05-03 Fr 19:12]
+   :LOGBOOK:
+   - State "CANCELLED"  from "TODO"       [2013-05-03 Fr 19:12] \\
+     later
+   :END:
    [2013-02-16 Sa 23:39]
 ** DONE keybindings for commands
    CLOSED: [2013-03-19 Di 16:13]
@@ -125,9 +162,18 @@
    - State "DONE"       from "TODO"       [2013-02-14 Do 17:11]
    :END:
    [2013-02-13 Mi 01:37]
-** TODO announce new version in PicoLisp mailing-list
+** CANCELLED announce new version in PicoLisp mailing-list        :CANCELLED:
+   CLOSED: [2013-05-03 Fr 19:14]
+   :LOGBOOK:
+   - State "CANCELLED"  from "TODO"       [2013-05-03 Fr 19:14] \\
+     enough publicity
+   :END:
    [2013-02-13 Mi 01:37]
-** TODO change version number (comment and const)
+** DONE change version number (comment and const)
+   CLOSED: [2013-05-03 Fr 19:14]
+   :LOGBOOK:
+   - State "DONE"       from "TODO"       [2013-05-03 Fr 19:14]
+   :END:
    [2013-02-13 Mi 01:37]
 ** CANCELLED fix menu                                             :CANCELLED:
    CLOSED: [2013-02-14 Do 17:12]

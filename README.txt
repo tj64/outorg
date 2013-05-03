@@ -26,7 +26,7 @@ _________________
 
   Author: Thorsten Jolitz <tjolitz AT gmail DOT com>
   Maintainer: Thorsten Jolitz <tjolitz AT gmail DOT com>
-  Version: 0.9
+  Version: 1.0
   Created: 11th February 2013
   Keywords: outlines, org-mode, editing
 
@@ -132,4 +132,5 @@ _________________
 
    date              author(s)        version 
   ----------------------------------------------
+   2013-05-03 Fr   Thorsten Jolitz      1.0
    2013-02-11 Mo   Thorsten Jolitz      0.9 

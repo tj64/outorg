@@ -2,7 +2,7 @@
 ;;   :PROPERTIES:
 ;;   :copyright: Thorsten Jolitz
 ;;   :copyright-years: 2013
-;;   :version:  0.9
+;;   :version:  1.0
 ;;   :licence:  GPL 2 or later (free software)
 ;;   :licence-url: http://www.gnu.org/licenses/
 ;;   :part-of-emacs: no
@@ -75,6 +75,7 @@
 
 ;; | date            | author(s)       | version |
 ;; |-----------------+-----------------+---------|
+;; | <2013-05-03 Fr> | Thorsten Jolitz |     1.0 |
 ;; | <2013-02-11 Mo> | Thorsten Jolitz |     0.9 |
 
 ;; * Requires
@@ -94,7 +95,7 @@ There is a mode hook, and two commands:
 ;; * Variables
 ;; ** Consts
 
-(defconst outorg-version "0.9"
+(defconst outorg-version "1.0"
   "outorg version number.")
 
 ;; ** Vars
