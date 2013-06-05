@@ -362,7 +362,8 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
             (car (split-string mode-name "\\."))))
          (in-org-babel-load-languages-p
           (assq
-           (intern language-name)
+           (intern
+            (if (string-equal language-name "ess") "R" language-name))
            org-babel-load-languages)))
     (save-excursion
       (goto-char (point-min))
