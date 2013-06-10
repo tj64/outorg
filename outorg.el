@@ -333,8 +333,12 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
        (1+ (- (marker-position outorg-code-buffer-point-marker)
           (marker-position outorg-code-buffer-beg-of-subtree-marker)))))
     ;; activate programming language major mode and convert to org
-    (funcall (outorg-get-buffer-mode
-              (marker-buffer outorg-code-buffer-point-marker)))
+    (let ((mode (outorg-get-buffer-mode
+              (marker-buffer outorg-code-buffer-point-marker))))
+      ;; special case R-mode
+      (if (eq mode 'ess-mode)
+          (funcall 'R-mode)
+        (funcall mode)))
     (outorg-convert-to-org)
     ;; change major mode to org-mode
     (org-mode)
@@ -564,9 +568,15 @@ With ARG, edit the whole buffer, otherwise the current subtree."
   kill edit-buffer"
   (interactive)
   (widen)
-  (funcall
-   (outorg-get-buffer-mode
-    (marker-buffer outorg-code-buffer-point-marker)))
+  (let ((mode (outorg-get-buffer-mode
+               (marker-buffer outorg-code-buffer-point-marker))))
+    ;; special case R-mode
+    (if (eq mode 'ess-mode)
+        (funcall 'R-mode)
+      (funcall mode)))
+  ;; (funcall
+  ;;  (outorg-get-buffer-mode
+  ;;   (marker-buffer outorg-code-buffer-point-marker)))
   (setq outorg-edit-buffer-marker (point-marker))
   (outorg-convert-back-to-code)
   (outorg-replace-code-with-edits)
