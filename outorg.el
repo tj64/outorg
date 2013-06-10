@@ -403,7 +403,9 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
           (forward-line -1)
           (insert
            (if in-org-babel-load-languages-p
-               (concat "#+begin_src " language-name)
+               (concat
+                "#+begin_src "
+                (if (string-equal language-name "ess") "R" language-name))
              "#+begin_example"))
           (forward-line)
           (setq last-line-comment-p nil))
