@@ -505,8 +505,9 @@ Assume that edit-buffer major-mode has been set back to the
             (save-excursion
               (insert "!!!")
               (comment-region (point-at-bol) (point-at-eol))
-              (replace-string "!!!#+" "#+"
-                              nil (point-at-bol) (point-at-eol)))))
+              (beginning-of-line)
+              (and (looking-at "!!![[:space:]]*#+")
+                   (replace-match "#+")))))
          ;; end code/example block
          ((looking-at "^[ \t]*#\\+end_?")
           (if (or (and (not in-org-babel-load-languages-p)
@@ -522,8 +523,9 @@ Assume that edit-buffer major-mode has been set back to the
             (save-excursion
               (insert "!!!")
               (comment-region (point-at-bol) (point-at-eol))
-              (replace-string "!!!#+" "#+"
-                              nil (point-at-bol) (point-at-eol)))))
+              (beginning-of-line)
+              (and (looking-at "!!![[:space:]]*#+")
+                   (replace-match "#+")))))
         ;; line inside code/example block (do nothing)
         (inside-code-or-example-block-p)
         ;; not-empty line outside code/example block
