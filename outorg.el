@@ -484,7 +484,6 @@ Assume that edit-buffer major-mode has been set back to the
   programming-language major-mode of the associated code-buffer
   before this function is called."
   (let* ((inside-code-or-example-block-p nil)
-         (comment-normalize-vars)
          (comment-style "plain")
          (mode-name
           (format "%S" major-mode))
@@ -521,7 +520,6 @@ Assume that edit-buffer major-mode has been set back to the
                 (setq inside-code-or-example-block-p t))
             (save-excursion
               (insert "!!!")
-              (comment-normalize-vars)
               (comment-region (point-at-bol) (point-at-eol))
               (beginning-of-line)
               (and (looking-at "\\(^.+\\)\\(!!![[:space:]]*#\\+\\)")
@@ -540,7 +538,6 @@ Assume that edit-buffer major-mode has been set back to the
                 (setq inside-code-or-example-block-p nil))
             (save-excursion
               (insert "!!!")
-              (comment-normalize-vars)
               (comment-region (point-at-bol) (point-at-eol))
               (beginning-of-line)
               (and (looking-at "\\(^.+\\)\\(!!![[:space:]]*#\\+\\)")
@@ -558,12 +555,10 @@ Assume that edit-buffer major-mode has been set back to the
                      (let ((strg ";"))
                        (dotimes (i (1- org-header-level) strg)
                          (setq strg (concat strg ";"))))))
-               (comment-normalize-vars)
                (comment-region (point-at-bol) (point-at-eol))
                (and
                 (looking-at "\\(;;\\)\\( [*]+\\)\\( \\)")
                 (replace-match replacement-string nil nil nil 2)))
-           (comment-normalize-vars)
            (comment-region (point-at-bol) (point-at-eol)))))
       (forward-line)))))
 
