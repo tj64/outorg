@@ -146,7 +146,6 @@ Emacs shutdown."))
 
 (defvar outorg-hook nil
   "Functions to run after `outorg' is loaded.")
-;; demanded for callers of 'comment' functions
 
 (defvar outorg-edit-minor-mode-hook nil
   "Hook run after `outorg' switched a source code file or subtree to
