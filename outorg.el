@@ -147,7 +147,6 @@ Emacs shutdown."))
 (defvar outorg-hook nil
   "Functions to run after `outorg' is loaded.")
 ;; demanded for callers of 'comment' functions
-(add-hook 'outorg-hook 'comment-normalize-vars)
 
 (defvar outorg-edit-minor-mode-hook nil
   "Hook run after `outorg' switched a source code file or subtree to
@@ -185,6 +184,7 @@ first line of the window showing the editing buffer."
 If have comment return COMMENT-START, otherwise return nil."
   (save-excursion
     (beginning-of-line)
+    (comment-normalize-vars)
     (comment-search-forward (line-end-position) t)))
 
 (defun outorg-get-buffer-mode (buffer-or-string)
@@ -485,6 +485,7 @@ Assume that edit-buffer major-mode has been set back to the
   programming-language major-mode of the associated code-buffer
   before this function is called."
   (let* ((inside-code-or-example-block-p nil)
+         (comment-normalize-vars)
          (comment-style "plain")
          (mode-name
           (format "%S" major-mode))
@@ -521,6 +522,7 @@ Assume that edit-buffer major-mode has been set back to the
                 (setq inside-code-or-example-block-p t))
             (save-excursion
               (insert "!!!")
+              (comment-normalize-vars)
               (comment-region (point-at-bol) (point-at-eol))
               (beginning-of-line)
               (and (looking-at "\\(^.+\\)\\(!!![[:space:]]*#\\+\\)")
@@ -539,6 +541,7 @@ Assume that edit-buffer major-mode has been set back to the
                 (setq inside-code-or-example-block-p nil))
             (save-excursion
               (insert "!!!")
+              (comment-normalize-vars)
               (comment-region (point-at-bol) (point-at-eol))
               (beginning-of-line)
               (and (looking-at "\\(^.+\\)\\(!!![[:space:]]*#\\+\\)")
@@ -556,10 +559,12 @@ Assume that edit-buffer major-mode has been set back to the
                      (let ((strg ";"))
                        (dotimes (i (1- org-header-level) strg)
                          (setq strg (concat strg ";"))))))
+               (comment-normalize-vars)
                (comment-region (point-at-bol) (point-at-eol))
                (and
                 (looking-at "\\(;;\\)\\( [*]+\\)\\( \\)")
                 (replace-match replacement-string nil nil nil 2)))
+           (comment-normalize-vars)
            (comment-region (point-at-bol) (point-at-eol)))))
       (forward-line)))))
 
