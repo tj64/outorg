@@ -316,6 +316,38 @@ of `outorg-temporary-directory'."
 
 ;; *** Copy and Convert
 
+(defun outorg-prepare-message-mode-buffer-for-editing ()
+  "Prepare an unsent-mail in a message-mode buffer for outorg.
+
+This function assumes that '--text follows this line--' is the
+first line below the message header, is always present, and never
+modified by the user. It turns this line into an `outshine'
+headline and out-comments all text below this line - if any."
+    (goto-char (point-min))
+    (re-search-forward "--text follows this line--" nil 'NOERROR)
+    (replace-match "* \\&")
+    (beginning-of-line)
+    (comment-region (point) (point-max))
+    (forward-line))
+
+(defun outorg-prepare-message-mode-buffer-for-sending ()
+  "Prepare an unsent-mail edited via `outorg-edit' for sending.
+
+This function assumes that '* --text follows this line--' is the
+first line below the message header and is, like all lines below
+it, out-commented with `comment-region'. It deletes the leading
+star and uncomments the line and all text below it - if any."
+  (save-excursion
+    (goto-char (point-min))
+    (re-search-forward
+     (concat
+      "\\(" (regexp-quote "* ") "\\)"
+      "--text follows this line--")
+     nil 'NOERROR)
+    (replace-match "" nil nil nil 1)
+    (beginning-of-line)
+    (uncomment-region (point) (point-max))))
+
 (defun outorg-copy-and-convert ()
   "Copy code buffer content to tmp-buffer and convert it to Org syntax.
 If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
@@ -611,6 +643,8 @@ With ARG, edit the whole buffer, otherwise the current subtree."
            (error "Cannot edit read-only buffer")
          (setq inhibit-read-only t)
          (setq outorg-code-buffer-read-only-p t)))
+  (and (eq major-mode 'message-mode)
+       (outorg-prepare-message-mode-buffer-for-editing))
   (setq outorg-code-buffer-point-marker (point-marker))
   (save-excursion
     (outline-back-to-heading 'INVISIBLE-OK)
@@ -647,6 +681,9 @@ With ARG, edit the whole buffer, otherwise the current subtree."
                        outorg-edit-buffer-marker)
                       (marker-position
                        outorg-code-buffer-beg-of-subtree-marker)))))
+  ;; avoid confirmation prompt when killing the edit buffer
+  (with-current-buffer (marker-buffer outorg-edit-buffer-marker)
+    (set-buffer-modified-p nil))
   (kill-buffer
    (marker-buffer outorg-edit-buffer-marker))
   ;; (switch-to-buffer
@@ -655,6 +692,8 @@ With ARG, edit the whole buffer, otherwise the current subtree."
   ;;  (marker-position outorg-code-buffer-point-marker))
   (and outorg-code-buffer-read-only-p
        (setq inhibit-read-only nil))
+  (and (eq major-mode 'message-mode)
+       (outorg-prepare-message-mode-buffer-for-sending))
   (outorg-reset-global-vars))
 
 ;; * Menus and Keys

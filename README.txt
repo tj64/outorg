@@ -83,6 +83,12 @@ _________________
   C-c ' (outorg-edit-as-org)
   `---------------------------
 
+  or, depending on the outline-mode prefix
+
+  ,---------------------------
+  M-# M-# (outorg-edit-as-org)
+  `---------------------------
+
   used in source-code buffers where `outline-minor-mode' is activated
   with `outshine' extensions. The Org-mode edit-buffer popped up by this
   command has `outorg-edit-mode' activated, a minor-mode with only 2
