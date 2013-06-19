@@ -616,7 +616,9 @@ Assume that edit-buffer major-mode has been set back to the
     (with-current-buffer code-buf
       (if outorg-edit-whole-buffer-p
           (progn
-            (erase-buffer)
+            (if (buffer-narrowed-p)
+                (delete-region (point-min) (point-max))
+              (erase-buffer))
             (insert-buffer-substring-no-properties
              edit-buf edit-buf-point-min edit-buf-point-max))
         (goto-char (marker-position outorg-code-buffer-point-marker))
