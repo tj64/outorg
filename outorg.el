@@ -327,8 +327,10 @@ headline and out-comments all text below this line - if any."
     (re-search-forward "--text follows this line--" nil 'NOERROR)
     (replace-match "* \\&")
     (beginning-of-line)
-    (comment-region (point) (point-max))
-    (forward-line))
+    (let ((start-body (point)))
+      (comment-region start-body (point-max))
+      (narrow-to-region start-body (point-max))
+      (forward-line)))
 
 (defun outorg-prepare-message-mode-buffer-for-sending ()
   "Prepare an unsent-mail edited via `outorg-edit' for sending.
@@ -346,7 +348,9 @@ star and uncomments the line and all text below it - if any."
      nil 'NOERROR)
     (replace-match "" nil nil nil 1)
     (beginning-of-line)
-    (uncomment-region (point) (point-max))))
+    (let ((start-body (point)))
+      (uncomment-region start-body (point-max))
+      (widen))))
 
 (defun outorg-copy-and-convert ()
   "Copy code buffer content to tmp-buffer and convert it to Org syntax.
@@ -357,7 +361,8 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
     (save-restriction
       (with-current-buffer edit-buffer
         (erase-buffer))
-      (widen)
+      ;; make outorg respect narrowing
+      ;; (widen)                           
       ;; copy code buffer content
       (copy-to-buffer
        edit-buffer
