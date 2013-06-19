@@ -316,6 +316,70 @@ of `outorg-temporary-directory'."
 
 ;; *** Copy and Convert
 
+(defun outorg-convert-org-file-to-source-code
+  (&optional mode infile outfile BATCH)
+  "Convert an existing Org-mode file into an Outshine buffer.
+
+If MODE is non-nil, the Outshine buffer will be put in this
+major-mode, otherwise the major-mode of the language of the first
+source-code block in the Org-mode buffer will be used.
+
+If INFILE is non-nil, the specified Org-mode file will be visited
+and its buffer converted, otherwise the current buffer will be
+converted.
+
+If OUTFILE is non-nil, the converted Outshine buffer will be saved in this
+file. Its the user's responsability to make sure that OUTFILE's
+file-extension is suited for the major-mode of the Outshine buffer to be
+saved. When in doubt, consult variable  `auto-mode-alist' for associations
+between file-extensions and major-modes.
+
+If BATCH is non-nil (and OUTFILE is non-nil, otherwise it makes
+no sense), the new Outshine file is saved and its buffer
+deleted."
+  (let* ((org-buffer (if infile
+                         (if (and (file-exists-p infile)
+                                  (string-equal
+                                   (file-name-extension infile) "org"))
+                             (find-file (expand-file-name infile))
+                           (error
+                            "Infile doesn't exist or is not an Org file"))
+                       (current-buffer)))
+         (maj-mode (or mode
+                       (with-current-buffer org-buffer
+                         (save-excursion
+                           (goto-char (point-min))
+                           (or
+                            ;; major-mode of first src-block
+                            (ignore-errors
+                              (org-next-block
+                               nil nil org-babel-src-block-regexp)
+                              (format
+                               "%s-mode"
+                               (car (org-babel-get-src-block-info 'LIGHT))))
+                            ;; default case emacs-lisp-mode
+                            "emacs-lisp-mode"))))))
+    (with-current-buffer (get-buffer-create
+                          (generate-new-buffer-name "tmp"))
+      (setq outorg-code-buffer-point-marker (point-marker))
+      (funcall (intern maj-mode))
+      (and outfile
+           ;; FIXME does not really avoid confirmation prompts
+           (add-to-list 'revert-without-query (expand-file-name outfile))
+           (if BATCH
+               (write-file (expand-file-name outfile))
+             (write-file (expand-file-name outfile) 'CONFIRM))))
+    (setq outorg-edit-whole-buffer-p t)
+    (setq outorg-initial-window-config
+          (current-window-configuration))
+    (with-current-buffer (get-buffer-create "*outorg-edit-buffer*")
+      (erase-buffer)
+      (insert-buffer-substring org-buffer)
+      (outorg-copy-edits-and-exit))
+    (and outfile BATCH (save-buffer) (kill-buffer))
+    ;; FIXME
+    (remove (expand-file-name outfile) revert-without-query)))
+
 (defun outorg-prepare-message-mode-buffer-for-editing ()
   "Prepare an unsent-mail in a message-mode buffer for outorg.
 
@@ -362,7 +426,7 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
       (with-current-buffer edit-buffer
         (erase-buffer))
       ;; make outorg respect narrowing
-      ;; (widen)                           
+      ;; (widen)
       ;; copy code buffer content
       (copy-to-buffer
        edit-buffer
