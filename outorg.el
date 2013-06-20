@@ -288,13 +288,14 @@ of `outorg-temporary-directory'."
 ;; TODO better use buffer-local variables instead?
 (defun outorg-reset-global-vars ()
   "Reset some global vars defined by outorg to initial values."
-  (set-marker outorg-code-buffer-point-marker nil)
-  (set-marker outorg-code-buffer-beg-of-subtree-marker nil)
-  (set-marker outorg-edit-buffer-marker nil)
-  (setq outorg-edit-whole-buffer-p nil)
-  (setq outorg-initial-window-config nil)
-  (setq outorg-code-buffer-read-only-p nil)
-  (setq outorg-oldschool-elisp-headers-p nil))
+  (ignore-errors
+    (set-marker outorg-code-buffer-point-marker nil)
+    (set-marker outorg-code-buffer-beg-of-subtree-marker nil)
+    (set-marker outorg-edit-buffer-marker nil)
+    (setq outorg-edit-whole-buffer-p nil)
+    (setq outorg-initial-window-config nil)
+    (setq outorg-code-buffer-read-only-p nil)
+    (setq outorg-oldschool-elisp-headers-p nil)))
 
 ;; *** Remove Trailing Blank Lines
 
@@ -366,8 +367,8 @@ deleted."
       (setq outorg-code-buffer-point-marker (point-marker))
       (funcall (intern maj-mode))
       (and outfile
-           ;; FIXME does not really avoid confirmation prompts
-           (add-to-list 'revert-without-query (expand-file-name outfile))
+           ;; ;; FIXME does not really avoid confirmation prompts
+           ;; (add-to-list 'revert-without-query (expand-file-name outfile))
            (if BATCH
                (write-file (expand-file-name outfile))
              (write-file (expand-file-name outfile) 'CONFIRM))))
@@ -378,9 +379,17 @@ deleted."
       (erase-buffer)
       (insert-buffer-substring org-buffer)
       (outorg-copy-edits-and-exit))
-    (and outfile BATCH (save-buffer) (kill-buffer))
-    ;; FIXME
-    (remove (expand-file-name outfile) revert-without-query)))
+    ;; ;; FIXME ugly hack
+    ;; (funcall major-mode)
+    ;; (funcall major-mode)
+    ;; (fontify-keywords)
+    (when outfile
+      (save-buffer)
+      ;; (revert-buffer t t)
+      ;; (remove
+      ;;  (expand-file-name outfile)
+      ;;  revert-without-query)
+      (and BATCH (kill-buffer)))))
 
 (defun outorg-prepare-message-mode-buffer-for-editing ()
   "Prepare an unsent-mail in a message-mode buffer for outorg.
