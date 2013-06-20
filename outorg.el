@@ -769,6 +769,50 @@ With ARG, edit the whole buffer, otherwise the current subtree."
        (outorg-prepare-message-mode-buffer-for-sending))
   (outorg-reset-global-vars))
 
+(defun outorg-replace-source-blocks-with-results
+  (&optional arg &rest languages)
+  "Replace source-blocks with their results.
+
+Only source-blocks with ':export results' in their header
+arguments will be mapped.
+
+If LANGUAGES is non-nil, only those source-blocks with a
+language found in the list are mapped.
+
+If LANGUAGES is nil but a prefix-argument ARG is given, only the
+languages read from the mini-buffer (separated by blanks) are mapped.
+
+Otherwise, all languages found in `org-babel-load-languages' are mapped."
+  (interactive "P\n")
+  (let ((langs (or languages
+                   (and arg
+                        (split-string
+                         (read-string
+                          (concat "Org Babel languages separated by blanks: "))
+                         " " 'OMIT-NULLS))
+                   (mapcar
+                    (lambda (X) (symbol-name (car X)))
+                    org-babel-load-languages))))
+    (org-babel-map-src-blocks nil
+      (and
+       (string-equal
+        (cdr
+         (assoc
+          :exports
+          (org-babel-parse-header-arguments header-args)))
+        "results")
+       (member lang langs)
+       (org-babel-execute-src-block)
+       (let* ((block-start (org-babel-where-is-src-block-head))
+              (results-head (org-babel-where-is-src-block-result))
+              (results-body
+               (save-excursion
+                 (goto-char results-head)
+                 (forward-line)
+                 (point))))
+         (delete-region block-start results-body))))))
+
+
 ;; * Menus and Keys
 ;; ** Menus
 
