@@ -324,15 +324,17 @@ If MODE is non-nil, the Outshine buffer will be put in this
 major-mode, otherwise the major-mode of the language of the first
 source-code block in the Org-mode buffer will be used.
 
-If INFILE is non-nil, the specified Org-mode file will be visited
-and its buffer converted, otherwise the current buffer will be
-converted.
+If INFILE is non-nil, the specified Org-mode file will be
+visited, otherwise the current buffer will be used (i.e. the
+buffer content will be copied to a temporary *outorg-edit-buffer*
+for further processing).
 
-If OUTFILE is non-nil, the converted Outshine buffer will be saved in this
-file. Its the user's responsability to make sure that OUTFILE's
-file-extension is suited for the major-mode of the Outshine buffer to be
-saved. When in doubt, consult variable  `auto-mode-alist' for associations
-between file-extensions and major-modes.
+If OUTFILE is non-nil, the converted Outshine buffer will be
+saved in this file. Its the user's responsability to make sure
+that OUTFILE's file-extension is suited for the major-mode of the
+Outshine buffer to be saved. When in doubt, consult variable
+`auto-mode-alist' for associations between file-extensions and
+major-modes.
 
 If BATCH is non-nil (and OUTFILE is non-nil, otherwise it makes
 no sense), the new Outshine file is saved and its buffer
