@@ -142,6 +142,18 @@ Emacs shutdown."))
 (defvar outorg-oldschool-elisp-headers-p nil
   "Non-nil if an Emacs Lisp file uses oldschool headers ';;;+'")
 
+(defvar outorg-insert-export-template-for-org-mode-p nil
+  "Non-nil means either the file specified in
+`outorg-export-template-for-org-mode' or a file given by the user
+will be inserted at the top of the *outorg-edit-buffer* when it
+is opened, and will be removed when it is closed, thus enabling
+the user to e.g. define default export options in a file and use
+them on-demand in the *outorg-edit-buffer*. The value of this variable is
+  toggled with command `outorg-toggle-export-template-insertion'.")
+
+(defvar outorg-ask-user-for-export-template-file-p nil
+  "Non-nil means user is prompted for export-template-file.")
+
 ;; ** Hooks
 
 (defvar outorg-hook nil
@@ -302,7 +314,10 @@ of `outorg-temporary-directory'."
     (setq outorg-edit-whole-buffer-p nil)
     (setq outorg-initial-window-config nil)
     (setq outorg-code-buffer-read-only-p nil)
-    (setq outorg-oldschool-elisp-headers-p nil)))
+    (setq outorg-oldschool-elisp-headers-p nil)
+    ;; (setq outorg-insert-export-template-for-org-mode-p nil)
+    ;; (setq outorg-ask-user-for-export-template-file-p nil)
+    ))
 
 ;; *** Remove Trailing Blank Lines
 
@@ -483,7 +498,14 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
     (if (not outorg-edit-whole-buffer-p)
         (show-all)
       (hide-sublevels 3)
-      (show-subtree))))
+      (show-subtree))
+    ;; insert export template
+    (cond
+     (outorg-ask-user-for-export-template-file-p
+        (call-interactively
+         'outorg-insert-users-export-template-file))
+     (outorg-insert-export-template-for-org-mode-p
+      (outorg-insert-export-template-for-org-mode)))))
 
 (defun outorg-convert-to-org ()
   "Convert file content to Org Syntax"
@@ -598,7 +620,7 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
                  (insert "#+end_example"))))))))
 
 (defun outorg-unindent-active-source-blocks (src-block-lang)
-  "Remove common indentation from active source-blocks. 
+  "Remove common indentation from active source-blocks.
 
 While editing in the *outorg-edit-buffer*, the source-code of the
 source-blocks with language LANG (which should be the major-mode
@@ -861,6 +883,78 @@ Otherwise, all languages found in `org-babel-load-languages' are mapped."
                  (point))))
          (delete-region block-start results-body))))))
 
+(defun outorg-toggle-export-template-insertion (&optional arg)
+  "Toggles automatic insertion of export template into *outorg-edit-buffer*
+
+With prefix arg, unconditionally deactivates insertion if numeric
+alue of ARG is negative, otherwise unconditionally activates it, except value
+is 16 (C-u C-u) - then `outorg-ask-user-for-export-template-file-p' will be
+set to t and the user asked for a file to insert.
+
+Toggles the value without prefix arg."
+  (interactive "P")
+  (let ((num (prefix-numeric-value arg)))
+    (cond
+     ((= num 1) (if outorg-insert-export-template-for-org-mode-p
+                    (prog
+                     (setq outorg-insert-export-template-for-org-mode-p nil)
+                     (setq outorg-ask-user-for-export-template-file-p nil))
+                  (setq outorg-insert-export-template-for-org-mode-p t)
+                  (setq outorg-ask-user-for-export-template-file-p nil)))
+     ((= num 16) (setq outorg-ask-user-for-export-template-file-p t))
+     ((< num 0) (setq outorg-insert-export-template-for-org-mode-p nil)
+      (setq outorg-ask-user-for-export-template-file-p nil))
+     ((> num 1) (setq outorg-insert-export-template-for-org-mode-p t))
+     (setq outorg-ask-user-for-export-template-file-p nil))))
+
+
+(defun outorg-insert-export-template-for-org-mode ()
+  "Insert a default export template in the *outorg-edit-buffer*"
+  (interactive)
+  (save-excursion
+    (goto-char (point-min))
+    (insert
+     (concat
+      "###<<< *BEGIN EXPORT TEMPLATE* [edits will be lost at exit] >>>###\n"
+      (format "#+TITLE: %s\n"
+              (ignore-errors
+                (file-name-sans-extension
+                 (file-name-nondirectory
+                  (buffer-file-name
+                   (marker-buffer
+                    (or outorg-code-buffer-point-marker
+                        outorg-code-buffer-beg-of-subtree-marker)))))))
+      (format "#+LANGUAGE: %s\n" "en")
+      ;; ;; many people write in English, although locale is different
+      ;; (ignore-errors
+      ;;   (car (split-string (getenv "LANG") "_" 'OMIT-NULLS))))
+      (format "#+AUTHOR: %s\n"
+              (ignore-errors
+                (user-full-name)))
+      (format "#+EMAIL: %s\n" (ignore-errors
+                                (or user-mail-address
+                                    (getenv "MAIL"))))
+      (concat "#+OPTIONS:   H:3 num:t   toc:3 \\n:nil @:t ::t "
+              "|:t ^:nil -:t f:t *:t <:nil\n")
+      (concat "#+OPTIONS:   TeX:t LaTeX:nil skip:nil d:nil "
+              "todo:t pri:nil tags:not-in-toc\n")
+      "#+OPTIONS:   author:t creator:t timestamp:t email:t\n"
+      "# #+DESCRIPTION: <<add description here>>\n"
+      "# #+KEYWORDS:  <<add keywords here>>\n"
+      "# #+SEQ_TODO: <<add TODO keywords here>>\n"
+      (concat "#+INFOJS_OPT: view:nil toc:t ltoc:t mouse:underline "
+              "buttons:0 path:http://orgmode.org/org-info.js\n")
+      "#+EXPORT_SELECT_TAGS: export\n"
+      "#+EXPORT_EXCLUDE_TAGS: noexport\n"
+      "###<<< *END EXPORT TEMPLATE* >>>###\n\n\n"))))
+
+
+(defun outorg-insert-users-export-template-file (template-file)
+  "Insert a user export-template-file in the *outorg-edit-buffer*"
+  (interactive "fTemplate File: ")
+  (save-excursion
+    (goto-char (point-min))
+    (insert "")))
 
 ;; * Menus and Keys
 ;; ** Menus
