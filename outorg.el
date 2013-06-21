@@ -205,6 +205,15 @@ If have comment return COMMENT-START, otherwise return nil."
     (comment-normalize-vars)
     (comment-search-forward (line-end-position) t)))
 
+;; copied from http://www.emacswiki.org/emacs/basic-edit-toolkit.el
+(defun outorg-region-or-buffer-limits ()
+  "Return the start and end of the region as a list, smallest first.
+If the region is not active or empty, then bob and eob are used."
+  (if (or (not mark-active) (null (mark)) (= (point) (mark)))
+      (list (point-min) (point-max))
+    (if (< (point) (mark)) (list (point) (mark)) (list (mark) (point)))))
+
+
 (defun outorg-get-buffer-mode (buffer-or-string)
   "Return major mode of BUFFER-OR-STRING."
   (with-current-buffer buffer-or-string
@@ -644,8 +653,8 @@ converting back from Org to source-code if customizable variable
              (org-babel-mark-block)
                    (save-restriction
                      (narrow-to-region
-                      (car (region-or-buffer-limits))
-                      (cadr (region-or-buffer-limits)))
+                      (car (outorg-region-or-buffer-limits))
+                      (cadr (outorg-region-or-buffer-limits)))
                      (org-do-remove-indentation)))))))
 
 (defun outorg-convert-back-to-code ()
