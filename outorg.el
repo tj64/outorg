@@ -172,6 +172,13 @@ first line of the window showing the editing buffer."
   :group 'outorg
   :type 'boolean)
 
+(defcustom outorg-unindent-active-source-blocks-p t
+  "Non-nil means common indentation (e.g. 2 spaces) in the active
+source-blocks of the *outorg-edit-buffer* (i.e. those in the
+language of the associated source-code buffer, and only in those)
+is removed before converting back from Org to source-code."
+  :group 'outorg
+  :type 'boolean)
 
 ;; * Functions
 ;; ** Non-interactive Functions
@@ -590,6 +597,35 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
                    (insert "#+end_src")
                  (insert "#+end_example"))))))))
 
+(defun outorg-unindent-active-source-blocks (src-block-lang)
+  "Remove common indentation from active source-blocks. 
+
+While editing in the *outorg-edit-buffer*, the source-code of the
+source-blocks with language LANG (which should be the major-mode
+language of the associated source-code buffer) might be indented
+consciously or by accident. The latter happens e.g. when the
+source-blocks are edited with `org-edit-special' (C-c '), and
+variable `org-edit-src-content-indentation' has a value > 0.
+
+This function removes the introduced common indentation (e.g. 2
+spaces) in these source-blocks (and only in them) before
+converting back from Org to source-code if customizable variable
+`outorg-unindent-active-source-blocks-p' is non-nil."
+  (let ((language (if (string-equal src-block-lang "ess")
+                      "R" src-block-lang)))
+    (save-excursion
+      ;; ;; FIXME necessary?
+      ;; (goto-char (point-min))
+      (org-babel-map-src-blocks nil
+        ;; language given as argument equal to lang of processed block?
+        (and (string-equal language lang)
+             (org-babel-mark-block)
+                   (save-restriction
+                     (narrow-to-region
+                      (car (region-or-buffer-limits))
+                      (cadr (region-or-buffer-limits)))
+                     (org-do-remove-indentation)))))))
+
 (defun outorg-convert-back-to-code ()
   "Convert edit-buffer content back to programming language syntax.
 Assume that edit-buffer major-mode has been set back to the
@@ -745,6 +781,8 @@ With ARG, edit the whole buffer, otherwise the current subtree."
   (widen)
   (let ((mode (outorg-get-buffer-mode
                (marker-buffer outorg-code-buffer-point-marker))))
+    (and outorg-unindent-active-source-blocks-p
+         (outorg-unindent-active-source-blocks mode))
     ;; special case R-mode
     (if (eq mode 'ess-mode)
         (funcall 'R-mode)
