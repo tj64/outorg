@@ -782,7 +782,9 @@ With ARG, edit the whole buffer, otherwise the current subtree."
   (let ((mode (outorg-get-buffer-mode
                (marker-buffer outorg-code-buffer-point-marker))))
     (and outorg-unindent-active-source-blocks-p
-         (outorg-unindent-active-source-blocks mode))
+         (outorg-unindent-active-source-blocks
+          (car (split-string
+                (symbol-name mode) "-mode" 'OMIT-NULLS))))
     ;; special case R-mode
     (if (eq mode 'ess-mode)
         (funcall 'R-mode)
