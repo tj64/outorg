@@ -317,7 +317,7 @@ of `outorg-temporary-directory'."
 
 ;; *** Copy and Convert
 
-(defun outorg-convert-org-file-to-source-code
+(defun outorg-convert-org-to-outshine
   (&optional mode infile outfile BATCH)
   "Convert an existing Org-mode file into an Outshine buffer.
 
