@@ -641,6 +641,26 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
                    (insert "#+end_src")
                  (insert "#+end_example"))))))))
 
+
+
+(defun outorg-indent-active-source-blocks (src-block-lang)
+  "Indent active source-blocks after conversion to Org.
+
+This functionf calls `org-indent-block' on source-blocks in the
+major-mode language of the associated source-file."
+  (let ((language (if (string-equal src-block-lang "ess")
+                      "R" src-block-lang)))
+    (save-excursion
+      ;; ;; FIXME necessary?
+      ;; (goto-char (point-min))
+      (org-babel-map-src-blocks nil
+        ;; language given as argument equal to lang of processed block?
+        (and (string-equal language lang)
+             (org-babel-mark-block)
+             (org-indent-region
+              (car (outorg-region-or-buffer-limits))
+              (cadr (outorg-region-or-buffer-limits))))))))
+
 (defun outorg-unindent-active-source-blocks (src-block-lang)
   "Remove common indentation from active source-blocks.
 
