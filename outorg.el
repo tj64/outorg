@@ -142,7 +142,7 @@ Emacs shutdown."))
 (defvar outorg-oldschool-elisp-headers-p nil
   "Non-nil if an Emacs Lisp file uses oldschool headers ';;;+'")
 
-(defvar outorg-insert-export-template-for-org-mode-p nil
+(defvar outorg-insert-default-export-template-p nil
   "Non-nil means either the file specified in
 `outorg-export-template-for-org-mode' or a file given by the user
 will be inserted at the top of the *outorg-edit-buffer* when it
@@ -150,9 +150,22 @@ is opened, and will be removed when it is closed, thus enabling
 the user to e.g. define default export options in a file and use
 them on-demand in the *outorg-edit-buffer*. The value of this variable is
   toggled with command `outorg-toggle-export-template-insertion'.")
+;; (make-variable-buffer-local 'outorg-insert-default-export-template-p)
 
 (defvar outorg-ask-user-for-export-template-file-p nil
   "Non-nil means user is prompted for export-template-file.")
+;; (make-variable-buffer-local 'outorg-ask-user-for-export-template-file-p)
+
+(defvar outorg-keep-export-template-p nil
+  "Non-nil means inserted export template is permanent.")
+;; (make-variable-buffer-local 'outorg-keep-export-template-p)
+
+(defvar outorg-export-template-regexp
+  (concat
+   "[[:space:]\n]*"
+   "# <<<\\*\\*\\* BEGIN EXPORT TEMPLATE [[:ascii:]]+"
+   "# <<<\\*\\*\\* END EXPORT TEMPLATE \\*\\*\\*>>>[^*]*")
+  "Regexp used to identify (and delete) export templates.")
 
 ;; ** Hooks
 
@@ -324,9 +337,9 @@ of `outorg-temporary-directory'."
     (setq outorg-initial-window-config nil)
     (setq outorg-code-buffer-read-only-p nil)
     (setq outorg-oldschool-elisp-headers-p nil)
-    ;; (setq outorg-insert-export-template-for-org-mode-p nil)
-    ;; (setq outorg-ask-user-for-export-template-file-p nil)
-    ))
+    (setq outorg-insert-default-export-template-p nil)
+    (setq outorg-ask-user-for-export-template-file-p nil)
+    (setq outorg-keep-export-template-p nil)))
 
 ;; *** Remove Trailing Blank Lines
 
@@ -490,10 +503,10 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
      (if outorg-edit-whole-buffer-p
          (marker-position outorg-code-buffer-point-marker)
        (1+ (- (marker-position outorg-code-buffer-point-marker)
-          (marker-position outorg-code-buffer-beg-of-subtree-marker)))))
+              (marker-position outorg-code-buffer-beg-of-subtree-marker)))))
     ;; activate programming language major mode and convert to org
     (let ((mode (outorg-get-buffer-mode
-              (marker-buffer outorg-code-buffer-point-marker))))
+                 (marker-buffer outorg-code-buffer-point-marker))))
       ;; special case R-mode
       (if (eq mode 'ess-mode)
           (funcall 'R-mode)
@@ -507,14 +520,14 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
     (if (not outorg-edit-whole-buffer-p)
         (show-all)
       (hide-sublevels 3)
-      (show-subtree))
-    ;; insert export template
-    (cond
-     (outorg-ask-user-for-export-template-file-p
+      (ignore-errors (show-subtree))
+      ;; insert export template
+      (cond
+       (outorg-ask-user-for-export-template-file-p
         (call-interactively
-         'outorg-insert-users-export-template-file))
-     (outorg-insert-export-template-for-org-mode-p
-      (outorg-insert-export-template-for-org-mode)))))
+         'outorg-insert-export-template-file))
+       (outorg-insert-default-export-template-p
+        (outorg-insert-default-export-template))))))
 
 (defun outorg-convert-to-org ()
   "Convert file content to Org Syntax"
@@ -679,6 +692,9 @@ Assume that edit-buffer major-mode has been set back to the
            org-babel-load-languages)))
     (save-excursion
       (goto-char (point-min))
+      (ignore-errors
+        (looking-at outorg-export-template-regexp)
+        (replace-match ""))
       (while (not (eobp))
         (cond
          ;; empty line (do nothing)
@@ -783,8 +799,20 @@ Assume that edit-buffer major-mode has been set back to the
 
 (defun outorg-edit-as-org (&optional arg)
   "Convert and copy to temporary Org buffer
-With ARG, edit the whole buffer, otherwise the current subtree."
+
+With ARG, act conditional on the raw value of ARG:
+
+| prefix | raw | action 1          | action 2                         |
+|--------+-----+-------------------+----------------------------------|
+| C-u    | (4) | edit-whole-buffer | ---                              |
+| C-1    |   1 | edit-whole-buffer | insert default export-template   |
+| C-2    |   2 | edit-whole-buffer | ask user for template-file       |
+| C-3    |   3 | edit-whole-buffer | insert and keep default template |
+| C-4    |   4 | edit-whole-buffer | insert and keep template-file    |
+"
   (interactive "P")
+  (ignore-errors
+    (outorg-reset-global-vars))
   (and buffer-file-read-only
        (error "Cannor edit read-only buffer-file"))
   (and buffer-read-only
@@ -796,9 +824,31 @@ With ARG, edit the whole buffer, otherwise the current subtree."
        (outorg-prepare-message-mode-buffer-for-editing))
   (setq outorg-code-buffer-point-marker (point-marker))
   (save-excursion
-    (outline-back-to-heading 'INVISIBLE-OK)
+    (or
+     (outline-on-heading-p 'INVISIBLE-OK))
+     (ignore-errors
+       (outline-back-to-heading 'INVISIBLE-OK))
+     (ignore-errors
+       (outline-next-heading))
     (setq outorg-code-buffer-beg-of-subtree-marker (point-marker)))
-  (and arg (setq outorg-edit-whole-buffer-p t))
+  (and arg
+       (cond
+        ((equal arg '(4))
+         (setq outorg-edit-whole-buffer-p t))
+        ((equal arg 1)
+         (setq outorg-edit-whole-buffer-p t)
+         (setq outorg-insert-default-export-template-p t))
+        ((equal arg 2)
+         (setq outorg-edit-whole-buffer-p t)
+         (setq outorg-ask-user-for-export-template-file-p t))
+        ((equal arg 3)
+         (setq outorg-edit-whole-buffer-p t)
+         (setq outorg-insert-default-export-template-p t)
+         (setq outorg-keep-export-template-p t))
+        ((equal arg 4)
+         (setq outorg-edit-whole-buffer-p t)
+         (setq outorg-ask-user-for-export-template-file-p t)
+         (setq outorg-keep-export-template-p t))))
   (and outshine-enforce-no-comment-padding-p
        (setq outorg-oldschool-elisp-headers-p t))
   (setq outorg-initial-window-config
@@ -892,39 +942,46 @@ Otherwise, all languages found in `org-babel-load-languages' are mapped."
                  (point))))
          (delete-region block-start results-body))))))
 
-(defun outorg-toggle-export-template-insertion (&optional arg)
-  "Toggles automatic insertion of export template into *outorg-edit-buffer*
+;; (defun outorg-toggle-export-template-insertion (&optional arg)
+;;   "Toggles automatic insertion of export template into *outorg-edit-buffer*
 
-With prefix arg, unconditionally deactivates insertion if numeric
-alue of ARG is negative, otherwise unconditionally activates it, except value
-is 16 (C-u C-u) - then `outorg-ask-user-for-export-template-file-p' will be
-set to t and the user asked for a file to insert.
+;; With prefix arg, unconditionally deactivates insertion if numeric
+;; alue of ARG is negative, otherwise unconditionally activates it, except value
+;; is 16 (C-u C-u) - then `outorg-ask-user-for-export-template-file-p' will be
+;; set to t and the user asked for a file to insert.
 
-Toggles the value without prefix arg."
-  (interactive "P")
-  (let ((num (prefix-numeric-value arg)))
-    (cond
-     ((= num 1) (if outorg-insert-export-template-for-org-mode-p
-                    (prog
-                     (setq outorg-insert-export-template-for-org-mode-p nil)
-                     (setq outorg-ask-user-for-export-template-file-p nil))
-                  (setq outorg-insert-export-template-for-org-mode-p t)
-                  (setq outorg-ask-user-for-export-template-file-p nil)))
-     ((= num 16) (setq outorg-ask-user-for-export-template-file-p t))
-     ((< num 0) (setq outorg-insert-export-template-for-org-mode-p nil)
-      (setq outorg-ask-user-for-export-template-file-p nil))
-     ((> num 1) (setq outorg-insert-export-template-for-org-mode-p t))
-     (setq outorg-ask-user-for-export-template-file-p nil))))
+;; Toggles the value without prefix arg."
+;;   (interactive "P")
+;;   (let ((num (prefix-numeric-value arg)))
+;;     (cond
+;;      ((= num 1) (if outorg-insert-default-export-template-p
+;;                     (prog
+;;                      (setq outorg-insert-default-export-template-p nil)
+;;                      (setq outorg-ask-user-for-export-template-file-p nil))
+;;                   (setq outorg-insert-default-export-template-p t)
+;;                   (setq outorg-ask-user-for-export-template-file-p nil)))
+;;      ((= num 16) (setq outorg-ask-user-for-export-template-file-p t))
+;;      ((< num 0) (setq outorg-insert-default-export-template-p nil)
+;;       (setq outorg-ask-user-for-export-template-file-p nil))
+;;      ((> num 1) (setq outorg-insert-default-export-template-p t))
+;;      (setq outorg-ask-user-for-export-template-file-p nil))))
 
 
-(defun outorg-insert-export-template-for-org-mode ()
+(defun outorg-insert-default-export-template (&optional arg)
   "Insert a default export template in the *outorg-edit-buffer*"
-  (interactive)
+  (interactive "P")
+  (and arg
+       (cond
+        ((equal arg '(4))
+         (setq outorg-keep-export-template-p t))))
   (save-excursion
     (goto-char (point-min))
     (insert
      (concat
-      "###<<< *BEGIN EXPORT TEMPLATE* [edits will be lost at exit] >>>###\n"
+      (unless outorg-keep-export-template-p
+        (concat 
+        "# <<<*** BEGIN EXPORT TEMPLATE "
+        "[edits will be lost at exit] ***>>>\n\n"))
       (format "#+TITLE: %s\n"
               (ignore-errors
                 (file-name-sans-extension
@@ -954,16 +1011,30 @@ Toggles the value without prefix arg."
       (concat "#+INFOJS_OPT: view:nil toc:t ltoc:t mouse:underline "
               "buttons:0 path:http://orgmode.org/org-info.js\n")
       "#+EXPORT_SELECT_TAGS: export\n"
-      "#+EXPORT_EXCLUDE_TAGS: noexport\n"
-      "###<<< *END EXPORT TEMPLATE* >>>###\n\n\n"))))
+      "#+EXPORT_EXCLUDE_TAGS: noexport\n\n"
+      (unless outorg-keep-export-template-p
+        "# <<<*** END EXPORT TEMPLATE ***>>>\n\n")))))
 
-
-(defun outorg-insert-users-export-template-file (template-file)
+(defun outorg-insert-export-template-file (arg template-file )
   "Insert a user export-template-file in the *outorg-edit-buffer*"
-  (interactive "fTemplate File: ")
+  (interactive "P\nfTemplate File: ")
+  (and arg
+       (cond
+        ((equal arg '(4))
+         (setq outorg-keep-export-template-p t))))
   (save-excursion
     (goto-char (point-min))
-    (insert "")))
+    (unless outorg-keep-export-template-p
+     (insert
+      (concat
+       "# <<<*** BEGIN EXPORT TEMPLATE "
+       "[edits will be lost at exit] ***>>>\n\n")))
+    (forward-char
+     (cadr (insert-file-contents template-file)))
+    (newline)
+    (unless outorg-keep-export-template-p
+     (insert "# <<<*** END EXPORT TEMPLATE ***>>>\n")
+     (newline))))
 
 ;; * Menus and Keys
 ;; ** Menus
