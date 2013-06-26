@@ -713,8 +713,9 @@ Assume that edit-buffer major-mode has been set back to the
     (save-excursion
       (goto-char (point-min))
       (ignore-errors
-        (looking-at outorg-export-template-regexp)
-        (replace-match ""))
+        (and
+         (looking-at outorg-export-template-regexp)
+         (replace-match "")))
       (while (not (eobp))
         (cond
          ;; empty line (do nothing)
@@ -757,25 +758,25 @@ Assume that edit-buffer major-mode has been set back to the
               (beginning-of-line)
               (and (looking-at "\\(^.+\\)\\(!!![[:space:]]*#\\+\\)")
                    (replace-match "#+" nil nil nil 2)))))
-        ;; line inside code/example block (do nothing)
-        (inside-code-or-example-block-p)
-        ;; not-empty line outside code/example block
-        (t
-         (if (and outorg-oldschool-elisp-headers-p
-                  (looking-at "^[*]+ "))
-             ;; deal with oldschool elisp headers (;;;+ )
-             (let* ((org-header-level
-                     (1- (length (match-string-no-properties 0))))
-                    (replacement-string
-                     (let ((strg ";"))
-                       (dotimes (i (1- org-header-level) strg)
-                         (setq strg (concat strg ";"))))))
-               (comment-region (point-at-bol) (point-at-eol))
-               (and
-                (looking-at "\\(;;\\)\\( [*]+\\)\\( \\)")
-                (replace-match replacement-string nil nil nil 2)))
-           (comment-region (point-at-bol) (point-at-eol)))))
-      (forward-line)))))
+         ;; line inside code/example block (do nothing)
+         (inside-code-or-example-block-p)
+         ;; not-empty line outside code/example block
+         (t
+          (if (and outorg-oldschool-elisp-headers-p
+                   (looking-at "^[*]+ "))
+              ;; deal with oldschool elisp headers (;;;+ )
+              (let* ((org-header-level
+                      (1- (length (match-string-no-properties 0))))
+                     (replacement-string
+                      (let ((strg ";"))
+                        (dotimes (i (1- org-header-level) strg)
+                          (setq strg (concat strg ";"))))))
+                (comment-region (point-at-bol) (point-at-eol))
+                (and
+                 (looking-at "\\(;;\\)\\( [*]+\\)\\( \\)")
+                 (replace-match replacement-string nil nil nil 2)))
+            (comment-region (point-at-bol) (point-at-eol)))))
+        (forward-line)))))
 
 (defun outorg-replace-code-with-edits ()
   "Replace code-buffer contents with edits."
