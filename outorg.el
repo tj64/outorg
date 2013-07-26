@@ -471,6 +471,118 @@ star and uncomments the line and all text below it - if any."
       (uncomment-region start-body (point-max))
       (widen))))
 
+(defun outorg-prepare-iorg-edit-buffer-for-editing ()
+  "Prepare a buffer opened with `edit' from iorg-scrape for outorg.
+
+This function assumes that a PicoLisp symbol that contains the
+text of an Org-mode file (fetched from an iOrg application) has
+been loaded into a PicoLisp `edit' buffer. It transforms the
+buffer content to a `outshine' compatible format, such that
+`outorg-edit-as-org' can be applied on it.
+
+In particular, this function assumes that the original `edit'
+buffer has the following format
+
+#+begin_quote
+txt \"<content-org-file>\"
+
+\(********\)
+#+end_quote
+
+and that the text must be transformed to a format that looks
+somehow like this
+
+#+begin_quote
+## #+DESCRIPTION txt
+
+\[## #+<OPTIONAL-EXPORT-HEADERS>\]
+
+## * Org-file
+## Content
+
+\(********\)
+#+end_quote
+
+i.e. the symbol-name 'txt' is converted to a #+DESCRIPTION keyword
+and is followed by the (expanded and unquoted) content of the Org
+file. This whole section of the buffer is outcommented with
+picolisp-mode comment syntax. Finally, at the end of the buffer
+the '\(********\)' line is left as-is."
+  (goto-char (point-min))
+  (insert "#+DESCRIPTION ")
+  (re-search-forward "\"" nil 'NOERROR)
+  (replace-match "")
+  (newline 2)
+  (goto-char (point-max))
+  (re-search-backward "\"" nil 'NOERROR)
+  (replace-match "")
+  (newline)
+  (let ((end-body (point))
+        (start-body (point-min)))
+    (replace-string "^J" "
+" nil start-body end-body)
+    (goto-char (point-min))
+    (re-search-forward
+     (concat "(" (regexp-quote "********") ")") nil 'NOERROR)
+    (forward-line -1)
+    (setq end-body (point))
+    (comment-region start-body end-body)))
+
+(defun outorg-prepare-iorg-edit-buffer-for-posting ()
+  "Prepare an `edit' buffer for posting via iorg-scrape.
+
+This function assumes that a PicoLisp symbol that contains the
+text of an Org-mode file (fetched from an iOrg application) has
+been edited with outorg and converted back to PicoLisp. It
+transforms the `edit' buffer content back to its original format,
+such that it can be posted back to the PicoLisp system by closing
+the emacsclient (via the protocol defined in `eedit.l').
+
+In particular, this function assumes that the original `edit'
+buffer had the following format
+
+#+begin_quote
+txt \"<content-org-file>\"
+
+\(********\)
+#+end_quote
+
+and that the actual text that has to be transformed back to this
+format looks somehow like this
+
+#+begin_quote
+## #+DESCRIPTION txt
+
+\[## #+<OPTIONAL-EXPORT-HEADERS>\]
+
+## * Org-file
+## Content
+
+\(********\)
+#+end_quote
+
+i.e. the symbol-name 'txt' has been converted to a #+DESCRIPTION
+keyword and is followed by the (expanded and unquoted) content of
+the Org file. This whole section of the buffer is outcommented
+with picolisp-mode comment syntax. Finally, at the end of the
+buffer the '\(********\)' line is found again."
+  (uncomment-region (point-min) (point-max))
+  (goto-char (point-min))
+  (re-search-forward (regexp-quote "#+DESCRIPTION ") nil 'NOERROR)
+  (replace-match "")
+  (end-of-line)
+  (let ((show-trailing-whitespace nil))
+    (kill-line 2))
+  (insert "\"")
+  (re-search-forward
+   (concat "(" (regexp-quote "********") ")") nil 'NOERROR)
+  (beginning-of-line)
+  (re-search-backward "[[:alnum:][:punct:]]" nil 'NOERROR)
+  (forward-char)
+  (insert "\"")
+  (replace-string "
+" "^J" nil (point-min) (point)))
+
 (defun outorg-copy-and-convert ()
   "Copy code buffer content to tmp-buffer and convert it to Org syntax.
 If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
