@@ -947,7 +947,7 @@ With ARG, act conditional on the raw value of ARG:
   (ignore-errors
     (outorg-reset-global-vars))
   (and buffer-file-read-only
-       (error "Cannor edit read-only buffer-file"))
+       (error "Cannot edit read-only buffer-file"))
   (and buffer-read-only
        (if (not (y-or-n-p "Buffer is read-only - make writable "))
            (error "Cannot edit read-only buffer")
@@ -955,14 +955,21 @@ With ARG, act conditional on the raw value of ARG:
          (setq outorg-code-buffer-read-only-p t)))
   (and (eq major-mode 'message-mode)
        (outorg-prepare-message-mode-buffer-for-editing))
+  (and (eq major-mode 'picolisp-mode)
+       (save-excursion
+         (save-match-data
+           (goto-char (point-max))
+           (re-search-backward
+            (concat "(" (regexp-quote "********") ")") nil 'NOERROR)))
+       (outorg-prepare-iorg-edit-buffer-for-editing))
   (setq outorg-code-buffer-point-marker (point-marker))
   (save-excursion
     (or
      (outline-on-heading-p 'INVISIBLE-OK))
-     (ignore-errors
-       (outline-back-to-heading 'INVISIBLE-OK))
-     (ignore-errors
-       (outline-next-heading))
+    (ignore-errors
+      (outline-back-to-heading 'INVISIBLE-OK))
+    (ignore-errors
+      (outline-next-heading))
     (setq outorg-code-buffer-beg-of-subtree-marker (point-marker)))
   (and arg
        (cond
@@ -1030,6 +1037,13 @@ With ARG, act conditional on the raw value of ARG:
        (setq inhibit-read-only nil))
   (and (eq major-mode 'message-mode)
        (outorg-prepare-message-mode-buffer-for-sending))
+  (and (eq major-mode 'picolisp-mode)
+       (save-excursion
+         (save-match-data
+           (goto-char (point-max))
+           (re-search-backward
+            (concat "(" (regexp-quote "********") ")") nil 'NOERROR)))
+       (outorg-prepare-iorg-edit-buffer-for-posting))
   (outorg-reset-global-vars))
 
 (defun outorg-replace-source-blocks-with-results
