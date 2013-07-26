@@ -510,7 +510,7 @@ file. This whole section of the buffer is outcommented with
 picolisp-mode comment syntax. Finally, at the end of the buffer
 the '\(********\)' line is left as-is."
   (goto-char (point-min))
-  (insert "#+DESCRIPTION ")
+  (insert "#+DESCRIPTION: ")
   (re-search-forward "\\(\"\\|NIL\\)" nil 'NOERROR)
   (if (string-equal (match-string-no-properties 0) "NIL")
       (progn
@@ -528,8 +528,7 @@ the '\(********\)' line is left as-is."
   (newline)
   (let ((end-body (point))
         (start-body (point-min)))
-    (replace-string "^J" "
-" nil start-body end-body)
+    (replace-string "^J" "\n" nil start-body end-body)
     (goto-char (point-min))
     (re-search-forward
      (concat "(" (regexp-quote "********") ")") nil 'NOERROR)
@@ -579,7 +578,7 @@ buffer the '\(********\)' line is found again."
          (concat "(" (regexp-quote "********") ")")))
   (uncomment-region (point-min) (point-max))
   (goto-char (point-min))
-  (re-search-forward (regexp-quote "#+DESCRIPTION ") nil 'NOERROR)
+  (re-search-forward (regexp-quote "#+DESCRIPTION: ") nil 'NOERROR)
   (replace-match "")
   (end-of-line)
   (let ((show-trailing-whitespace nil))
@@ -590,16 +589,16 @@ buffer the '\(********\)' line is found again."
   (re-search-backward "[[:alnum:][:punct:]]" nil 'NOERROR)
   (forward-char)
   (insert "\"")
-  ;; (kill-line)
-  (replace-string "
-" "^J" nil (point-min) (point))
+  (kill-line)
+  (replace-string "\n" "^J" nil (point-min) (point))
   (goto-char (point-min))
   (when (looking-at
          (concat "\\(^.*\\)"
                  "\\(\"\\* <Header>\"\\)"
                  "\\([\s\t\n]+" final-line "\\)"))
       (replace-match (format "%s" "NIL") nil nil nil 2)
-      (kill-line))))
+      ;; (kill-line)
+      )))
 
 (defun outorg-copy-and-convert ()
   "Copy code buffer content to tmp-buffer and convert it to Org syntax.
