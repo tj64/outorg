@@ -292,7 +292,8 @@ of `outorg-temporary-directory'."
          (outorg-temp-file
           (file-name-sans-extension
            (file-name-nondirectory
-            (buffer-file-name
+            (buffer-name
+            ;; (buffer-file-name
              (marker-buffer
               outorg-code-buffer-point-marker)))))))
     (write-region nil nil tmp-file)))
@@ -510,12 +511,20 @@ picolisp-mode comment syntax. Finally, at the end of the buffer
 the '\(********\)' line is left as-is."
   (goto-char (point-min))
   (insert "#+DESCRIPTION ")
-  (re-search-forward "\"" nil 'NOERROR)
-  (replace-match "")
-  (newline 2)
+  (re-search-forward "\\(\"\\|NIL\\)" nil 'NOERROR)
+  (if (string-equal (match-string-no-properties 0) "NIL")
+      (progn
+        (backward-word)
+        (newline 2)
+        (looking-at "NIL")
+        (replace-match "* <Header>" 'FIXEDCASE 'LITERAL))
+    (replace-match "")
+    (newline 2))
   (goto-char (point-max))
-  (re-search-backward "\"" nil 'NOERROR)
-  (replace-match "")
+  (re-search-backward "[^*)(\n\t\s]" nil 'NOERROR)
+  (if (string-equal (match-string-no-properties 0) "\"")
+    (replace-match "")
+    (forward-char))
   (newline)
   (let ((end-body (point))
         (start-body (point-min)))
@@ -566,6 +575,8 @@ keyword and is followed by the (expanded and unquoted) content of
 the Org file. This whole section of the buffer is outcommented
 with picolisp-mode comment syntax. Finally, at the end of the
 buffer the '\(********\)' line is found again."
+  (let ((final-line
+         (concat "(" (regexp-quote "********") ")")))
   (uncomment-region (point-min) (point-max))
   (goto-char (point-min))
   (re-search-forward (regexp-quote "#+DESCRIPTION ") nil 'NOERROR)
@@ -574,14 +585,21 @@ buffer the '\(********\)' line is found again."
   (let ((show-trailing-whitespace nil))
     (kill-line 2))
   (insert "\"")
-  (re-search-forward
-   (concat "(" (regexp-quote "********") ")") nil 'NOERROR)
+  (re-search-forward final-line  nil 'NOERROR)   
   (beginning-of-line)
   (re-search-backward "[[:alnum:][:punct:]]" nil 'NOERROR)
   (forward-char)
   (insert "\"")
+  ;; (kill-line)
   (replace-string "
-" "^J" nil (point-min) (point)))
+" "^J" nil (point-min) (point))
+  (goto-char (point-min))
+  (when (looking-at
+         (concat "\\(^.*\\)"
+                 "\\(\"\\* <Header>\"\\)"
+                 "\\([\s\t\n]+" final-line "\\)"))
+      (replace-match (format "%s" "NIL") nil nil nil 2)
+      (kill-line))))
 
 (defun outorg-copy-and-convert ()
   "Copy code buffer content to tmp-buffer and convert it to Org syntax.
