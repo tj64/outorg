@@ -41,10 +41,17 @@
 ;; `comment-start' character ';' of Emacs Lisp would be replaced by that of
 ;; the respective major-mode, e.g. '#' in PicoLisp mode or '%' in LaTeX mode.
 
-;; `outorgs' main command is
+;; `outorgs' main command is accessible via two different keybindings
+;; 1. with outline-minor-mode-prefix 'C-c'
 
 ;;  ,---------------------------
 ;;  | C-c ' (outorg-edit-as-org)
+;;  `---------------------------
+
+;;  2. with outline-minor-mode-prefix 'M-#'
+
+;;  ,---------------------------
+;;  | M-# M-# (outorg-edit-as-org)
 ;;  `---------------------------
 
 ;; used in source-code buffers where `outline-minor-mode' is activated with
