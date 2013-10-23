@@ -469,7 +469,9 @@ headline and out-comments all text below this line - if any."
     (goto-char (point-min))
     ;; (re-search-forward "--text follows this line--" nil 'NOERROR)
     (re-search-forward mail-header-separator nil 'NOERROR)
-    (replace-match "* \\&")
+   (let ((inhibit-read-only t))
+     (replace-match "* \\&"))
+    ;; (replace-match "* \\&")
     (beginning-of-line)
     (let ((start-body (point)))
       (comment-region start-body (point-max))
@@ -994,7 +996,8 @@ With ARG, act conditional on the raw value of ARG:
            (error "Cannot edit read-only buffer")
          (setq inhibit-read-only t)
          (setq outorg-code-buffer-read-only-p t)))
-  (and (eq major-mode 'message-mode)
+  ;; (and (eq major-mode 'message-mode)
+  (and (derived-mode-p 'message-mode)
        (outorg-prepare-message-mode-buffer-for-editing))
   (and (eq major-mode 'picolisp-mode)
        (save-excursion
@@ -1076,7 +1079,8 @@ With ARG, act conditional on the raw value of ARG:
   ;;  (marker-position outorg-code-buffer-point-marker))
   (and outorg-code-buffer-read-only-p
        (setq inhibit-read-only nil))
-  (and (eq major-mode 'message-mode)
+  ;; (and (eq major-mode 'message-mode)
+  (and (derived-mode-p 'message-mode)
        (outorg-prepare-message-mode-buffer-for-sending))
   (and (eq major-mode 'picolisp-mode)
        (save-excursion
