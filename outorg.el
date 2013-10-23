@@ -238,7 +238,7 @@ If have comment return COMMENT-START, otherwise return nil."
     (beginning-of-line)
     (comment-normalize-vars)
     (comment-search-forward (line-end-position) t)))
-
+ 
 ;; copied from http://www.emacswiki.org/emacs/basic-edit-toolkit.el
 (defun outorg-region-or-buffer-limits ()
   "Return the start and end of the region as a list, smallest first.
@@ -457,15 +457,18 @@ deleted."
       ;;  revert-without-query)
       (and BATCH (kill-buffer)))))
 
+;; Thx to Eric Abrahamsen for the tip about `mail-header-separator'
 (defun outorg-prepare-message-mode-buffer-for-editing ()
   "Prepare an unsent-mail in a message-mode buffer for outorg.
 
-This function assumes that '--text follows this line--' is the
+This function assumes that '--text follows this line--' (or
+whatever is found inside variable `mail-header-separator') is the
 first line below the message header, is always present, and never
 modified by the user. It turns this line into an `outshine'
 headline and out-comments all text below this line - if any."
     (goto-char (point-min))
-    (re-search-forward "--text follows this line--" nil 'NOERROR)
+    ;; (re-search-forward "--text follows this line--" nil 'NOERROR)
+    (re-search-forward mail-header-separator nil 'NOERROR)
     (replace-match "* \\&")
     (beginning-of-line)
     (let ((start-body (point)))
@@ -1220,6 +1223,21 @@ Otherwise, all languages found in `org-babel-load-languages' are mapped."
     (unless outorg-keep-export-template-p
      (insert "# <<<*** END EXPORT TEMPLATE ***>>>\n")
      (newline))))
+
+;; courtesy to Trey Jackson (http://tinyurl.com/cbnlemg)
+(defun outorg-which-active-modes ()
+  "Give a message of which minor modes are enabled in the current buffer."
+  (interactive)
+  (let ((active-modes))
+    (mapc
+     (lambda (mode)
+       (condition-case nil
+           (if (and (symbolp mode) (symbol-value mode))
+               (add-to-list 'active-modes mode))
+         (error nil) ))
+     minor-mode-list)
+    ;; (message "Active modes are %s" active-modes)
+    active-modes))
 
 ;;; Menus and Keys
 ;;;; Menus
