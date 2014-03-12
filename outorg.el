@@ -701,7 +701,12 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
          (in-org-babel-load-languages-p
           (assq
            (intern
-            (if (string-equal language-name "ess") "R" language-name))
+            (cond
+		((string-equal language-name "ess") "R")
+		((string-equal language-name "c") "C")
+		((string-equal language-name "c++") "cpp")
+		((string-equal language-name "d") "D")
+		(t language-name)))
            org-babel-load-languages)))
     (save-excursion
       (goto-char (point-min))
@@ -863,7 +868,12 @@ Assume that edit-buffer major-mode has been set back to the
          (in-org-babel-load-languages-p
           (assq
            (intern
-            (if (string-equal language-name "ess") "R" language-name))
+            (cond
+		((string-equal language-name "ess") "R")
+		((string-equal language-name "c") "C")
+		((string-equal language-name "c++") "cpp")
+		((string-equal language-name "d") "D")
+		(t language-name)))
            org-babel-load-languages)))
     (save-excursion
       (goto-char (point-min))
