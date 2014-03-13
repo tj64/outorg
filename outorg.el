@@ -939,13 +939,14 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
                  (insert "#+end_example"))))))))
 
 
-(defun outorg-indent-active-source-blocks (src-block-lang)
+(defun outorg-indent-active-source-blocks (mode-name)
   "Indent active source-blocks after conversion to Org.
 
 This function calls `org-indent-block' on source-blocks in the
 major-mode language of the associated source-file."
-  (let ((language (if (string-equal src-block-lang "ess")
-                      "R" src-block-lang)))
+  (let ((language (outorg-get-babel-name mode-name)))
+	 ;; (if (string-equal mode-name "ess")
+         ;;              "R" mode-name)))
     (save-excursion
       ;; ;; FIXME necessary?
       ;; (goto-char (point-min))
@@ -957,7 +958,7 @@ major-mode language of the associated source-file."
               (car (outorg-region-or-buffer-limits))
               (cadr (outorg-region-or-buffer-limits))))))))
 
-(defun outorg-unindent-active-source-blocks (src-block-lang)
+(defun outorg-unindent-active-source-blocks (mode-name)
   "Remove common indentation from active source-blocks.
 
 While editing in the *outorg-edit-buffer*, the source-code of the
@@ -971,8 +972,9 @@ This function removes the introduced common indentation (e.g. 2
 spaces) in these source-blocks (and only in them) before
 converting back from Org to source-code if customizable variable
 `outorg-unindent-active-source-blocks-p' is non-nil."
-  (let ((language (if (string-equal src-block-lang "ess")
-                      "R" src-block-lang)))
+  (let ((language (outorg-get-babel-name mode-name)))
+	 ;; (if (string-equal mode-name "ess")
+         ;;              "R" mode-name)))
     (save-excursion
       ;; ;; FIXME necessary?
       ;; (goto-char (point-min))
@@ -1192,9 +1194,9 @@ With ARG, act conditional on the raw value of ARG:
   (let ((mode (outorg-get-buffer-mode
                (marker-buffer outorg-code-buffer-point-marker))))
     (and outorg-unindent-active-source-blocks-p
-         (outorg-unindent-active-source-blocks
-          (car (split-string
-                (symbol-name mode) "-mode" 'OMIT-NULLS))))
+         (outorg-unindent-active-source-blocks mode))
+          ;; (car (split-string
+          ;;       (symbol-name mode) "-mode" 'OMIT-NULLS))))
     ;; special case R-mode
     (if (eq mode 'ess-mode)
         (funcall 'R-mode)
