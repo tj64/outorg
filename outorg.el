@@ -989,24 +989,28 @@ Assume that edit-buffer major-mode has been set back to the
   before this function is called."
   (let* ((inside-code-or-example-block-p nil)
          (comment-style "plain")
-         (mode-name
-          (format "%S" major-mode))
-         (splitted-mode-name
-          (split-string mode-name "-mode"))
-         (language-name
-          (if (> (length splitted-mode-name) 1)
-              (car splitted-mode-name)
-            (car (split-string mode-name "\\."))))
+         (buffer-mode (outorg-get-buffer-mode))
+	    ;; (marker-buffer outorg-code-buffer-point-marker)))
          (in-org-babel-load-languages-p
-          (assq
-           (intern
-            (cond
-                ((string-equal language-name "ess") "R")
-                ((string-equal language-name "c") "C")
-                ((string-equal language-name "c++") "cpp")
-                ((string-equal language-name "d") "D")
-                (t language-name)))
-           org-babel-load-languages)))
+	  (outorg-in-babel-load-languages-p buffer-mode)))
+         ;; (mode-name
+         ;;  (format "%S" major-mode))
+         ;; (splitted-mode-name
+         ;;  (split-string mode-name "-mode"))
+         ;; (language-name
+         ;;  (if (> (length splitted-mode-name) 1)
+         ;;      (car splitted-mode-name)
+         ;;    (car (split-string mode-name "\\."))))
+         ;; (in-org-babel-load-languages-p
+         ;;  (assq
+         ;;   (intern
+         ;;    (cond
+         ;;        ((string-equal language-name "ess") "R")
+         ;;        ((string-equal language-name "c") "C")
+         ;;        ((string-equal language-name "c++") "cpp")
+         ;;        ((string-equal language-name "d") "D")
+         ;;        (t language-name)))
+         ;;   org-babel-load-languages)))
     (save-excursion
       (goto-char (point-min))
       (ignore-errors
@@ -1024,9 +1028,12 @@ Assume that edit-buffer major-mode has been set back to the
                   (and in-org-babel-load-languages-p
                        (looking-at
                         (format "^[ \t]*#\\+begin_src %s"
-                                (if (string-equal language-name "ess")
-                                    "R"
-                                  language-name)))))
+				(outorg-get-babel-name
+				 buffer-mode 'as-strg-p)))))
+                                ;; (if (string-equal
+				;;      language-name "ess")
+                                ;;     "R"
+                                ;;   language-name)))))
               (progn
                 (kill-whole-line)
                 (forward-line -1)
