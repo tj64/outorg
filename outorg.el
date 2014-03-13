@@ -990,27 +990,8 @@ Assume that edit-buffer major-mode has been set back to the
   (let* ((inside-code-or-example-block-p nil)
          (comment-style "plain")
          (buffer-mode (outorg-get-buffer-mode))
-	    ;; (marker-buffer outorg-code-buffer-point-marker)))
          (in-org-babel-load-languages-p
 	  (outorg-in-babel-load-languages-p buffer-mode)))
-         ;; (mode-name
-         ;;  (format "%S" major-mode))
-         ;; (splitted-mode-name
-         ;;  (split-string mode-name "-mode"))
-         ;; (language-name
-         ;;  (if (> (length splitted-mode-name) 1)
-         ;;      (car splitted-mode-name)
-         ;;    (car (split-string mode-name "\\."))))
-         ;; (in-org-babel-load-languages-p
-         ;;  (assq
-         ;;   (intern
-         ;;    (cond
-         ;;        ((string-equal language-name "ess") "R")
-         ;;        ((string-equal language-name "c") "C")
-         ;;        ((string-equal language-name "c++") "cpp")
-         ;;        ((string-equal language-name "d") "D")
-         ;;        (t language-name)))
-         ;;   org-babel-load-languages)))
     (save-excursion
       (goto-char (point-min))
       (ignore-errors
@@ -1030,10 +1011,6 @@ Assume that edit-buffer major-mode has been set back to the
                         (format "^[ \t]*#\\+begin_src %s"
 				(outorg-get-babel-name
 				 buffer-mode 'as-strg-p)))))
-                                ;; (if (string-equal
-				;;      language-name "ess")
-                                ;;     "R"
-                                ;;   language-name)))))
               (progn
                 (kill-whole-line)
                 (forward-line -1)
