@@ -114,20 +114,6 @@ There is a mode hook, and two commands:
 \\[outorg-save-edits-to-tmp-file] outorg-save-edits-to-tmp-file"
   :lighter " Outorg")
 
-;;;; Derived Exporters
-;;;;; LaTeX
-
-  ;; (defun outorg-latex-property-drawer (drawer contents info)
-  ;;   (concat "\\begin{example}\n"
-  ;;           (org-element-interpret-data drawer)
-  ;;           "\\end{example}"))
-
-  ;; (org-export-define-derived-backend 'outorg-latex 'latex
-  ;;   :translate-alist '((property-drawer . my-latex-property-drawer)))
-
-;;;;; HTML
-;;;;; ASCII
-
 ;;; Variables
 ;;;; Consts
 
