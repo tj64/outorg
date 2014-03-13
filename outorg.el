@@ -600,7 +600,8 @@ deleted."
 ;; `outorg-copy-and-switch' is called. They will remain as comment
 ;; lines directly over their code section in the source-code buffer,
 ;; and thus be transformed to text - and thereby activated - every
-;; time `outorg-edit-as-org' is called."
+
+;; ;; time `outorg-edit-as-org' is called."
 ;;   (save-excursion
 ;;   (let* ((mode (outorg-get-buffer-mode
 ;;                (marker-buffer outorg-code-buffer-point-marker)))
@@ -662,16 +663,16 @@ buffer content to a `outshine' compatible format, such that
 In particular, this function assumes that the original `edit'
 buffer has the following format
 
-#+begin_quote
+;; #+begin_quote
 txt \"<content-org-file>\"
 
 \(********\)
-#+end_quote
+;; #+end_quote
 
 and that the text must be transformed to a format that looks
 somehow like this
 
-#+begin_quote
+;; #+begin_quote
 ## #+DESCRIPTION txt
 
 \[## #+<OPTIONAL-EXPORT-HEADERS>\]
@@ -680,7 +681,7 @@ somehow like this
 ## Content
 
 \(********\)
-#+end_quote
+;; #+end_quote
 
 i.e. the symbol-name 'txt' is converted to a #+DESCRIPTION keyword
 and is followed by the (expanded and unquoted) content of the Org
@@ -727,16 +728,16 @@ the emacsclient (via the protocol defined in `eedit.l').
 In particular, this function assumes that the original `edit'
 buffer had the following format
 
-#+begin_quote
+;; #+begin_quote
 txt \"<content-org-file>\"
 
 \(********\)
-#+end_quote
+;; #+end_quote
 
 and that the actual text that has to be transformed back to this
 format looks somehow like this
 
-#+begin_quote
+;; #+begin_quote
 ## #+DESCRIPTION txt
 
 \[## #+<OPTIONAL-EXPORT-HEADERS>\]
@@ -745,7 +746,7 @@ format looks somehow like this
 ## Content
 
 \(********\)
-#+end_quote
+;; #+end_quote
 
 i.e. the symbol-name 'txt' has been converted to a #+DESCRIPTION
 keyword and is followed by the (expanded and unquoted) content of
@@ -839,27 +840,32 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
 (defun outorg-convert-to-org ()
   "Convert file content to Org Syntax"
   (let* ((last-line-comment-p nil)
-         (mode-name
-          (format
-           "%S" (with-current-buffer
-                    (marker-buffer outorg-code-buffer-point-marker)
-                  major-mode)))
-         (splitted-mode-name
-          (split-string mode-name "-mode"))
-         (language-name
-          (if (> (length splitted-mode-name) 1)
-              (car splitted-mode-name)
-            (car (split-string mode-name "\\."))))
+         ;; (mode-name
+         ;;  (format
+         ;;   "%S" (with-current-buffer
+         ;;            (marker-buffer outorg-code-buffer-point-marker)
+         ;;          major-mode)))
+         ;; (splitted-mode-name
+         ;;  (split-string mode-name "-mode"))
+         (buffer-mode
+	   (outorg-get-buffer-mode
+	    (marker-buffer outorg-code-buffer-point-marker)))
+         ;; (language-name
+	 ;;  (outorg-get-language-name buffer-mode))
+          ;; (if (> (length splitted-mode-name) 1)
+          ;;     (car splitted-mode-name)
+          ;;   (car (split-string mode-name "\\."))))
          (in-org-babel-load-languages-p
-          (assq
-           (intern
-            (cond
-		((string-equal language-name "ess") "R")
-		((string-equal language-name "c") "C")
-		((string-equal language-name "c++") "cpp")
-		((string-equal language-name "d") "D")
-		(t language-name)))
-           org-babel-load-languages)))
+	  (outorg-in-babel-load-languages-p buffer-mode)))
+          ;; (assq
+          ;;  (intern
+          ;;   (cond
+          ;;       ((string-equal language-name "ess") "R")
+          ;;       ((string-equal language-name "c") "C")
+          ;;       ((string-equal language-name "c++") "cpp")
+          ;;       ((string-equal language-name "d") "D")
+          ;;       (t language-name)))
+          ;;  org-babel-load-languages)))
     (save-excursion
       (goto-char (point-min))
       (outorg-remove-trailing-blank-lines)
@@ -896,7 +902,10 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
            (if in-org-babel-load-languages-p
                (concat
                 "#+begin_src "
-                (if (string-equal language-name "ess") "R" language-name))
+		(outorg-get-babel-name buffer-mode 'as-strg-p))
+                ;; (if (string-equal language-name "ess")
+		;;     "R"
+		;;   language-name))
              "#+begin_example"))
           (forward-line)
           (setq last-line-comment-p nil))
@@ -1021,11 +1030,11 @@ Assume that edit-buffer major-mode has been set back to the
           (assq
            (intern
             (cond
-		((string-equal language-name "ess") "R")
-		((string-equal language-name "c") "C")
-		((string-equal language-name "c++") "cpp")
-		((string-equal language-name "d") "D")
-		(t language-name)))
+                ((string-equal language-name "ess") "R")
+                ((string-equal language-name "c") "C")
+                ((string-equal language-name "c++") "cpp")
+                ((string-equal language-name "d") "D")
+                (t language-name)))
            org-babel-load-languages)))
     (save-excursion
       (goto-char (point-min))
@@ -1131,7 +1140,6 @@ Assume that edit-buffer major-mode has been set back to the
            edit-buf edit-buf-point-min edit-buf-point-max))
         ;; (save-buffer)
         ))))
-
 
 ;;;; Commands
 
