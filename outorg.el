@@ -571,7 +571,7 @@ deleted."
       (erase-buffer)
       (insert-buffer-substring org-buffer)
       (org-mode)
-      ;; (outorg-transform-active-source-block-headers)
+      (outorg-transform-active-source-block-headers)
       (outorg-copy-edits-and-exit))
     ;; ;; FIXME ugly hack
     ;; (funcall major-mode)
@@ -585,30 +585,40 @@ deleted."
       ;;  revert-without-query)
       (and BATCH (kill-buffer)))))
 
-;; (defun outorg-transform-active-source-block-headers ()
-;;   "Move switches and arguments on top of block.
+(defun outorg-transform-active-source-block-headers ()
+  "Move switches and arguments on top of block.
 
-;; This functions transforms all active source-blocks, i.e. those
-;; with the associated source-code buffer's major-mode as
-;; language. If there are switches and header arguments after the
-;; language specification on the #+BEGIN_SRC line, they are moved on
-;; top of the block.
+This functions transforms all active source-blocks, i.e. those
+with the associated source-code buffer's major-mode as
+language. If there are switches and header arguments after the
+language specification on the #+BEGIN_SRC line, they are moved on
+top of the block.
 
-;; The idea behind this function is that it should be possible to
-;; specify permanent switches and arguments even for source-code
-;; blocks that are transformed back to code after
-;; `outorg-copy-and-switch' is called. They will remain as comment
-;; lines directly over their code section in the source-code buffer,
-;; and thus be transformed to text - and thereby activated - every
+The idea behind this function is that it should be possible to
+specify permanent switches and arguments even for source-code
+blocks that are transformed back to code after
+`outorg-copy-and-switch' is called. They will remain as comment
+lines directly over their code section in the source-code buffer,
+and thus be transformed to text - and thereby activated - every
 
-;; ;; time `outorg-edit-as-org' is called."
-;;   (save-excursion
-;;   (let* ((mode (outorg-get-buffer-mode
-;;                (marker-buffer outorg-code-buffer-point-marker)))
-;; 	(src-block-lang (outorg-babel-name
-;; 			 (car (split-string (symbol-name mode)
-;; 					   "-mode" 'OMIT-NULLS)))))
-;;      ())))
+;; time `outorg-edit-as-org' is called."
+  (save-excursion
+  (let* ((mode (outorg-get-buffer-mode
+               (marker-buffer outorg-code-buffer-point-marker)))
+	(active-lang
+	 (outorg-get-babel-name mode 'as-strg-p)))
+    (org-babel-map-src-blocks nil
+      (when (string-equal active-lang lang)
+	(let ((sw switches)
+	      (args header-args))
+	(goto-char end-lang)
+	(delete-region (point) (line-end-position))
+	(goto-char beg-block)
+	(forward-line -1)
+	(newline)
+	(insert (format "#+header: %s" sw))
+	(newline)
+	(insert (format "#+header: %s" args))))))))
 
 ;; Thx to Eric Abrahamsen for the tip about `mail-header-separator'
 (defun outorg-prepare-message-mode-buffer-for-editing ()
