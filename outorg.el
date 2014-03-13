@@ -840,32 +840,11 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
 (defun outorg-convert-to-org ()
   "Convert file content to Org Syntax"
   (let* ((last-line-comment-p nil)
-         ;; (mode-name
-         ;;  (format
-         ;;   "%S" (with-current-buffer
-         ;;            (marker-buffer outorg-code-buffer-point-marker)
-         ;;          major-mode)))
-         ;; (splitted-mode-name
-         ;;  (split-string mode-name "-mode"))
          (buffer-mode
 	   (outorg-get-buffer-mode
 	    (marker-buffer outorg-code-buffer-point-marker)))
-         ;; (language-name
-	 ;;  (outorg-get-language-name buffer-mode))
-          ;; (if (> (length splitted-mode-name) 1)
-          ;;     (car splitted-mode-name)
-          ;;   (car (split-string mode-name "\\."))))
          (in-org-babel-load-languages-p
 	  (outorg-in-babel-load-languages-p buffer-mode)))
-          ;; (assq
-          ;;  (intern
-          ;;   (cond
-          ;;       ((string-equal language-name "ess") "R")
-          ;;       ((string-equal language-name "c") "C")
-          ;;       ((string-equal language-name "c++") "cpp")
-          ;;       ((string-equal language-name "d") "D")
-          ;;       (t language-name)))
-          ;;  org-babel-load-languages)))
     (save-excursion
       (goto-char (point-min))
       (outorg-remove-trailing-blank-lines)
@@ -903,9 +882,6 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
                (concat
                 "#+begin_src "
 		(outorg-get-babel-name buffer-mode 'as-strg-p))
-                ;; (if (string-equal language-name "ess")
-		;;     "R"
-		;;   language-name))
              "#+begin_example"))
           (forward-line)
           (setq last-line-comment-p nil))
@@ -961,7 +937,6 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
                (if in-org-babel-load-languages-p
                    (insert "#+end_src")
                  (insert "#+end_example"))))))))
-
 
 
 (defun outorg-indent-active-source-blocks (src-block-lang)
