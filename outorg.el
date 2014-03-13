@@ -120,6 +120,61 @@ There is a mode hook, and two commands:
 (defconst outorg-version "1.0"
   "outorg version number.")
 
+;; FIXME org-babel names should be correct, but major-mode names need
+;; to be cross-checked!
+(defconst outorg-language-name-assocs
+  '((abc-mode . abc)
+    (asymptote-mode . asymptote)
+    (awk-mode . awk)
+    (c-mode . C)
+    (c++-mode . cpp)
+    (calc-mode . calc)
+    (clojure-mode . clojure)
+    (css-mode . css)
+    (d-mode . D)
+    (ditaa-mode . ditaa)
+    (dot-mode . dot)
+    (emacs-lisp-mode . emacs-lisp)
+    (eukleides-mode . eukleides)
+    (fomus-mode . fomus)
+    (fortran-mode . F90)
+    (gnuplot-mode . gnuplot)
+    (groovy-mode . groovy)
+    (haskell-mode . haskell)
+    (j-mode . J)
+    (java-mode . java)
+    (javascript-mode . js)
+    (julia-mode . julia)
+    (latex-mode . latex)
+    (ledger-mode . ledger)
+    (lilypond-mode . ly)
+    (lisp-mode . lisp)
+    (make-mode . makefile)
+    (mathomatic-mode . mathomatic)
+    (matlab-mode . matlab)
+    (maxima-mode . max)
+    (mscgen-mode . mscgen)
+    (objective-caml-mode . ocaml)
+    (octave-mode . octave)
+    (org-mode . org)
+    (oz-mode . oz)
+    (perl-mode . perl)
+    (picolisp-mode . picolisp)
+    (plantuml-mode . plantuml)
+    (python-mode . python)
+    (ess . R)
+    (ruby-mode . ruby)
+    (sass-mode . sass)
+    (scala-mode . scala)
+    (scheme-mode . scheme)
+    (shen-mode . shen)
+    (shell-mode . sh)
+    (sql-mode . sql)
+    (sqlite-mode . sqlite)
+    (tcl-mode . tcl))
+"Associations between major-mode-name and org-babel language
+names.")
+
 ;;;; Vars
 
 (defvar outline-minor-mode-prefix "\C-c"
@@ -214,7 +269,7 @@ is removed before converting back from Org to source-code."
 
 ;;; Functions
 ;;;; Non-interactive Functions
-;;;;; Get Source Buffer Mode
+;;;;; Get Buffer Mode and Language Name
 
 ;; copied from http://www.emacswiki.org/emacs/basic-edit-toolkit.el
 (defun outorg-comment-on-line-p ()
@@ -229,15 +284,100 @@ If have comment return COMMENT-START, otherwise return nil."
 (defun outorg-region-or-buffer-limits ()
   "Return the start and end of the region as a list, smallest first.
 If the region is not active or empty, then bob and eob are used."
-  (if (or (not mark-active) (null (mark)) (= (point) (mark)))
+  (if (or
+       (not mark-active)
+       (null (mark))
+       (= (point) (mark)))
       (list (point-min) (point-max))
-    (if (< (point) (mark)) (list (point) (mark)) (list (mark) (point)))))
+    (if (< (point) (mark))
+	(list (point) (mark))
+      (list (mark) (point)))))
 
+(defun outorg-get-buffer-mode (&optional buf-or-strg as-strg-p)
+  "Return major-mode of BUF-OR-STRG or current-buffer.
 
-(defun outorg-get-buffer-mode (buffer-or-string)
-  "Return major mode of BUFFER-OR-STRING."
-  (with-current-buffer buffer-or-string
-     major-mode))
+If AS-STRG-P is non-nil, a string is returned instead instead
+of a symbol."
+  (let ((buf (if buf-or-strg
+		 (get-buffer buf-or-strg)
+	       (current-buffer))))
+    (with-current-buffer buf
+	(if as-strg-p (symbol-name major-mode) major-mode))))
+
+(defun outorg-get-babel-name (&optional mode-name as-strg-p)
+  "Return the symbol associated in Org-Babel with MODE-NAME.
+
+Uses `outorg-language-name-assocs' as association list between
+the string returned by `major-mode' in the associated source-code
+buffer and the symbol used for that language in
+`org-babel-load-languages'. If AS-STRG-P is non-nil, a string
+is returned."
+  (let* ((mmode (or
+		 (and mode-name
+		      (cond
+		       ((stringp mode-name) (intern mode-name))
+		       ((symbolp mode-name) mode-name)
+		       (t (error
+			   "Mode-Name neither String nor Symbol"))))
+		 major-mode))
+	(bname (cdr (assoc mmode outorg-language-name-assocs))))
+    (if as-strg-p (symbol-name bname) bname)))
+
+(defun outorg-get-mode-name (babel-name &optional as-strg-p)
+  "Return the major-mode name associated with BABEL-NAME.
+
+Uses `outorg-language-name-assocs' as association list between
+the symbol returned by `major-mode' in the associated source-code
+buffer and the symbol used for that language in
+`org-babel-load-languages'. If AS-STRG-P is non-nil, a string
+is returned."
+  (let* ((bname
+	  (cond
+	   ((stringp babel-name) (intern babel-name))
+	   ((symbolp babel-name) babel-name)
+	   (t (error "Babel-Name neither String nor Symbol"))))
+	(mmode
+	 (car
+	  (rassoc bname outorg-language-name-assocs))))
+    (if as-strg-p (symbol-name mmode) mmode)))
+  
+(defun outorg-get-language-name (&optional mode-name as-sym-p)
+  "Extract car of splitted and normalized MODE-NAME.
+
+If AS-SYM-P is non-nil, a symbol instead of a string is
+returned."
+  (let* ((mmode (or
+		 (and mode-name
+		      (cond
+		       ((stringp mode-name) mode-name)
+		       ((symbolp mode-name) (symbol-name mode-name))
+		       (t (error
+			   "Mode-Name neither String nor Symbol"))))
+		 (symbol-name major-mode)))
+         (splitted-mmode
+          (split-string mmode "-mode"))
+         (language-name
+          (if (> (length splitted-mmode) 1)
+              (car splitted-mmode)
+            (car (split-string mmode "\\.")))))
+    (if as-sym-p (intern language-name) language-name)))
+
+(defun outorg-in-babel-load-languages-p (&optional mode-name)
+  "Non-nil if MODE-NAME is in Org-Babel load languages.
+
+If MODE-NAME is nil, check if Org-Babel identifier of major-mode of current buffer is in Org-Babel load languages."
+  (let* ((mmode (or
+		 (and mode-name
+		      (cond
+		       ((stringp mode-name) (intern mode-name))
+		       ((symbolp mode-name) mode-name)
+		       (t (error
+			   "Mode-Name neither String nor Symbol"))))
+		 major-mode)))
+    (assoc
+     (outorg-get-babel-name mmode)
+     org-babel-load-languages)))
+
 
 ;;;;; Configure Edit Buffer
 
@@ -430,6 +570,8 @@ deleted."
     (with-current-buffer (get-buffer-create "*outorg-edit-buffer*")
       (erase-buffer)
       (insert-buffer-substring org-buffer)
+      (org-mode)
+      ;; (outorg-transform-active-source-block-headers)
       (outorg-copy-edits-and-exit))
     ;; ;; FIXME ugly hack
     ;; (funcall major-mode)
@@ -442,6 +584,30 @@ deleted."
       ;;  (expand-file-name outfile)
       ;;  revert-without-query)
       (and BATCH (kill-buffer)))))
+
+;; (defun outorg-transform-active-source-block-headers ()
+;;   "Move switches and arguments on top of block.
+
+;; This functions transforms all active source-blocks, i.e. those
+;; with the associated source-code buffer's major-mode as
+;; language. If there are switches and header arguments after the
+;; language specification on the #+BEGIN_SRC line, they are moved on
+;; top of the block.
+
+;; The idea behind this function is that it should be possible to
+;; specify permanent switches and arguments even for source-code
+;; blocks that are transformed back to code after
+;; `outorg-copy-and-switch' is called. They will remain as comment
+;; lines directly over their code section in the source-code buffer,
+;; and thus be transformed to text - and thereby activated - every
+;; time `outorg-edit-as-org' is called."
+;;   (save-excursion
+;;   (let* ((mode (outorg-get-buffer-mode
+;;                (marker-buffer outorg-code-buffer-point-marker)))
+;; 	(src-block-lang (outorg-babel-name
+;; 			 (car (split-string (symbol-name mode)
+;; 					   "-mode" 'OMIT-NULLS)))))
+;;      ())))
 
 ;; Thx to Eric Abrahamsen for the tip about `mail-header-separator'
 (defun outorg-prepare-message-mode-buffer-for-editing ()
@@ -792,7 +958,7 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
 (defun outorg-indent-active-source-blocks (src-block-lang)
   "Indent active source-blocks after conversion to Org.
 
-This functionf calls `org-indent-block' on source-blocks in the
+This function calls `org-indent-block' on source-blocks in the
 major-mode language of the associated source-file."
   (let ((language (if (string-equal src-block-lang "ess")
                       "R" src-block-lang)))
