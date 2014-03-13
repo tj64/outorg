@@ -126,15 +126,15 @@ There is a mode hook, and two commands:
   '((abc-mode . abc)
     (asymptote-mode . asymptote)
     (awk-mode . awk)
-    (c-mode . C)
-    (c++-mode . cpp)
-    (calc-mode . calc)
+    (c-mode . C)			;
+    (c++-mode . cpp)			;
+    (calc-mode . calc)			;
     (clojure-mode . clojure)
     (css-mode . css)
-    (d-mode . D)
+    (d-mode . D)			;
     (ditaa-mode . ditaa)
     (dot-mode . dot)
-    (emacs-lisp-mode . emacs-lisp)
+    (emacs-lisp-mode . emacs-lisp)	;
     (eukleides-mode . eukleides)
     (fomus-mode . fomus)
     (fortran-mode . F90)
@@ -145,7 +145,7 @@ There is a mode hook, and two commands:
     (java-mode . java)
     (javascript-mode . js)
     (julia-mode . julia)
-    (latex-mode . latex)
+    (latex-mode . latex)		;
     (ledger-mode . ledger)
     (lilypond-mode . ly)
     (lisp-mode . lisp)
@@ -154,12 +154,12 @@ There is a mode hook, and two commands:
     (matlab-mode . matlab)
     (maxima-mode . max)
     (mscgen-mode . mscgen)
-    (objective-caml-mode . ocaml)
+    (tuareg-mode . ocaml)		;
     (octave-mode . octave)
-    (org-mode . org)
+    (org-mode . org)			;
     (oz-mode . oz)
     (perl-mode . perl)
-    (picolisp-mode . picolisp)
+    (picolisp-mode . picolisp)		;
     (plantuml-mode . plantuml)
     (python-mode . python)
     (ess . R)
@@ -168,7 +168,7 @@ There is a mode hook, and two commands:
     (scala-mode . scala)
     (scheme-mode . scheme)
     (shen-mode . shen)
-    (shell-mode . sh)
+    (sh-mode . sh)			;
     (sql-mode . sql)
     (sqlite-mode . sqlite)
     (tcl-mode . tcl))
