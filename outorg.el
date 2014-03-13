@@ -945,13 +945,10 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
 This function calls `org-indent-block' on source-blocks in the
 major-mode language of the associated source-file."
   (let ((language (outorg-get-babel-name mode-name)))
-	 ;; (if (string-equal mode-name "ess")
-         ;;              "R" mode-name)))
     (save-excursion
-      ;; ;; FIXME necessary?
-      ;; (goto-char (point-min))
       (org-babel-map-src-blocks nil
-        ;; language given as argument equal to lang of processed block?
+        ;; language given as argument equal to lang of processed
+        ;; block?
         (and (string-equal language lang)
              (org-babel-mark-block)
              (org-indent-region
@@ -973,13 +970,10 @@ spaces) in these source-blocks (and only in them) before
 converting back from Org to source-code if customizable variable
 `outorg-unindent-active-source-blocks-p' is non-nil."
   (let ((language (outorg-get-babel-name mode-name)))
-	 ;; (if (string-equal mode-name "ess")
-         ;;              "R" mode-name)))
     (save-excursion
-      ;; ;; FIXME necessary?
-      ;; (goto-char (point-min))
       (org-babel-map-src-blocks nil
-        ;; language given as argument equal to lang of processed block?
+        ;; language given as argument equal to lang of processed
+        ;; block?
         (and (string-equal language lang)
              (org-babel-mark-block)
                    (save-restriction
