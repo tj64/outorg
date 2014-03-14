@@ -443,7 +443,7 @@ of `outorg-temporary-directory'."
             ;; (buffer-file-name
              (marker-buffer
               outorg-code-buffer-point-marker)))))))
-    (write-region nil nil tmp-file)))
+    (write-region nil nil tmp-file nil 'VISIT)))
 
 ;; copied and adapted from ob-core.el
 (defun outorg-remove-temporary-directory ()
