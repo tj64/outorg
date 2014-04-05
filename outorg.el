@@ -162,7 +162,7 @@ There is a mode hook, and two commands:
     (picolisp-mode . picolisp)		;
     (plantuml-mode . plantuml)
     (python-mode . python)
-    (ess . R)
+    (ess-mode . R)
     (ruby-mode . ruby)
     (sass-mode . sass)
     (scala-mode . scala)
