@@ -2,7 +2,7 @@
 
 ;; Author: Thorsten Jolitz <tjolitz AT gmail DOT com>
 ;; Version: 1.0
-;; URL: https://github.com/tj64/outshine
+;; URL: https://github.com/tj64/outorg
 
 ;;;; MetaData
 ;;   :PROPERTIES:
