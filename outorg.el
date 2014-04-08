@@ -50,25 +50,25 @@
 
 ;;  1. with outline-minor-mode-prefix 'C-c'
 
-;;   ,---------------------------
-;;   | C-c ' (outorg-edit-as-org)
-;;   `---------------------------
+;;   ,,---------------------------
+;;   ,| C-c ' (outorg-edit-as-org)
+;;   ,`---------------------------
 
 ;;   2. with outline-minor-mode-prefix 'M-#'
 
-;;   ,---------------------------
-;;   | M-# M-# (outorg-edit-as-org)
-;;   `---------------------------
+;;   ,,---------------------------
+;;   ,| M-# M-# (outorg-edit-as-org)
+;;   ,`---------------------------
 
 ;; used in source-code buffers where `outline-minor-mode' is
 ;; activated with `outshine' extensions. The Org-mode edit-buffer
 ;; popped up by this command has `outorg-edit-minor-mode' activated,
 ;; a minor-mode with only 2 commands:
 
-;;   ,----------------------------------------
-;;   | M-# (outorg-copy-edits-and-exit)
-;;   | C-x C-s (outorg-save-edits-to-tmp-file)
-;;   `----------------------------------------
+;;   ,,----------------------------------------
+;;   ,| M-# (outorg-copy-edits-and-exit)
+;;   ,| C-x C-s (outorg-save-edits-to-tmp-file)
+;;   ,`----------------------------------------
 
 ;; If you want to insert Org-mode source-code or example blocks in
 ;; comment-sections, simply outcomment them in the outorg-edit
