@@ -7,6 +7,8 @@
     - [Emacs Version](#emacs-version)
   - [ChangeLog](#changelog)
 
+
+
 # outorg.el &#x2014; Org-style comment editing
 
 Author: Thorsten Jolitz <tjolitz AT gmail DOT com>
@@ -14,6 +16,26 @@ Version: 1.0
 URL: <https://github.com/tj64/outorg>
 
 ## MetaData
+
+    copyright: Thorsten Jolitz
+    
+    copyright-years: 2013
+    
+    version: 1.0
+    
+    licence: GPL 2 or later (free software)
+    
+    licence-url: http://www.gnu.org/licenses/
+    
+    part-of-emacs: no
+    
+    author: Thorsten Jolitz
+    
+    author_email: tjolitz AT gmail DOT com
+    
+    inspiration: org-src
+    
+    keywords: emacs org-mode comment-editing
 
 ## Commentary
 
@@ -46,27 +68,20 @@ that of the respective major-mode, e.g. '#' in PicoLisp mode or
 \`outorgs' main command is accessible via two different
 keybindings
 
-1.  with outline-minor-mode-prefix 'C-c'
-    
-    ,,&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;
-    ,| C-c ' (outorg-edit-as-org)
-    ,\`&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;
-    
-    1.  with outline-minor-mode-prefix 'M-#'
-    
-    ,,&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;
-    ,| M-# M-# (outorg-edit-as-org)
-    ,\`&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;
+-   with outline-minor-mode-prefix 'C-c'
+
+    C-c ' (outorg-edit-as-org)
+-   with outline-minor-mode-prefix 'M-#'
+
+    M-# M-# (outorg-edit-as-org)
 
 used in source-code buffers where \`outline-minor-mode' is
 activated with \`outshine' extensions. The Org-mode edit-buffer
 popped up by this command has \`outorg-edit-minor-mode' activated,
 a minor-mode with only 2 commands:
 
-,,-&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;
-,| M-# (outorg-copy-edits-and-exit)
-,| C-x C-s (outorg-save-edits-to-tmp-file)
-,\`-&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;&#x2014;
+    M-# (outorg-copy-edits-and-exit)
+    C-x C-s (outorg-save-edits-to-tmp-file)
 
 If you want to insert Org-mode source-code or example blocks in
 comment-sections, simply outcomment them in the outorg-edit
@@ -76,9 +91,7 @@ buffer before calling \`outorg-copy-edits-and-exit'.
 
 Insert
 
-;; #+begin<sub>src</sub> emacs-lisp
-;;  (require 'outorg)
-;; #+end<sub>src</sub>
+    (require 'outorg)
 
 in your .emacs. Since outshine.el has a soft dependency on outorg
 and navi-mode.el has a strong dependency on outshine (and a soft
@@ -102,7 +115,7 @@ important user files back and forth between two representations.
 ### Emacs Version
 
 \`outorg.el' works with [GNU Emacs 24.2.1
-(x86<sub>64</sub>-unknown-linux-gnu, GTK+ Version 3.6.4) of 2013-01-20 on
+(x86\_64-unknown-linux-gnu, GTK+ Version 3.6.4) of 2013-01-20 on
 eric]. No attempts of testing with older versions or other types
 of Emacs have been made (yet).
 

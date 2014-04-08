@@ -48,27 +48,27 @@
 ;; `outorgs' main command is accessible via two different
 ;; keybindings
 
-;;  1. with outline-minor-mode-prefix 'C-c'
+;;  - with outline-minor-mode-prefix 'C-c'
+    
+;; #+begin_example
+;;  C-c ' (outorg-edit-as-org)
+;; #+end_example
+  
+;;  - with outline-minor-mode-prefix 'M-#'
 
-;;   ,,---------------------------
-;;   ,| C-c ' (outorg-edit-as-org)
-;;   ,`---------------------------
-
-;;   2. with outline-minor-mode-prefix 'M-#'
-
-;;   ,,---------------------------
-;;   ,| M-# M-# (outorg-edit-as-org)
-;;   ,`---------------------------
+;; #+begin_example
+;;  M-# M-# (outorg-edit-as-org)
+;; #+end_example
 
 ;; used in source-code buffers where `outline-minor-mode' is
 ;; activated with `outshine' extensions. The Org-mode edit-buffer
 ;; popped up by this command has `outorg-edit-minor-mode' activated,
 ;; a minor-mode with only 2 commands:
 
-;;   ,,----------------------------------------
-;;   ,| M-# (outorg-copy-edits-and-exit)
-;;   ,| C-x C-s (outorg-save-edits-to-tmp-file)
-;;   ,`----------------------------------------
+;; #+begin_example
+;;    M-# (outorg-copy-edits-and-exit)
+;;    C-x C-s (outorg-save-edits-to-tmp-file)
+;; #+end_example
 
 ;; If you want to insert Org-mode source-code or example blocks in
 ;; comment-sections, simply outcomment them in the outorg-edit
@@ -78,9 +78,9 @@
 
 ;; Insert
 
-;; ;; #+begin_src emacs-lisp
-;; ;;  (require 'outorg)
-;; ;; #+end_src
+;; #+begin_example
+;;  (require 'outorg)
+;; #+end_example
 
 ;; in your .emacs. Since outshine.el has a soft dependency on outorg
 ;; and navi-mode.el has a strong dependency on outshine (and a soft
@@ -107,7 +107,6 @@
 ;; (x86_64-unknown-linux-gnu, GTK+ Version 3.6.4) of 2013-01-20 on
 ;; eric]. No attempts of testing with older versions or other types
 ;; of Emacs have been made (yet).
-
 
 ;;;; ChangeLog
 
