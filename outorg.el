@@ -7,7 +7,7 @@
 ;;;; MetaData
 ;;   :PROPERTIES:
 ;;   :copyright: Thorsten Jolitz
-;;   :copyright-years: 2013
+;;   :copyright-years: 2013+
 ;;   :version:  1.0
 ;;   :licence:  GPL 2 or later (free software)
 ;;   :licence-url: http://www.gnu.org/licenses/
@@ -1362,7 +1362,7 @@ Otherwise, all languages found in `org-babel-load-languages' are mapped."
                                 (or user-mail-address
                                     (getenv "MAIL"))))
       (concat "#+OPTIONS:   H:3 num:t   toc:3 \\n:nil @:t ::t "
-              "|:t ^:nil -:t f:t *:t <:nil\n")
+              "|:t ^:nil -:t f:t *:t <:nil\n prop:t")
       (concat "#+OPTIONS:   TeX:t LaTeX:nil skip:nil d:nil "
               "todo:t pri:nil tags:not-in-toc\n")
       "#+OPTIONS:   author:t creator:t timestamp:t email:t\n"
