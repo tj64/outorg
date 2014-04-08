@@ -1362,7 +1362,7 @@ Otherwise, all languages found in `org-babel-load-languages' are mapped."
                                 (or user-mail-address
                                     (getenv "MAIL"))))
       (concat "#+OPTIONS:   H:3 num:t   toc:3 \\n:nil @:t ::t "
-              "|:t ^:nil -:t f:t *:t <:nil\n prop:t")
+              "|:t ^:nil -:t f:t *:t <:nil  prop:t\n")
       (concat "#+OPTIONS:   TeX:t LaTeX:nil skip:nil d:nil "
               "todo:t pri:nil tags:not-in-toc\n")
       "#+OPTIONS:   author:t creator:t timestamp:t email:t\n"
