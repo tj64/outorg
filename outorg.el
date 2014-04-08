@@ -21,51 +21,58 @@
 ;;;; Commentary
 ;;;;; About outorg
 
-;; [NOTE: For the sake of adding this library to MELPA, headlines had to be
-;; converted back from 'Org-mode style' to 'oldschool', and a few extra lines
-;; of required information had to be added on top of the MetaData section -
-;; just to comply with the required file formatting. All outshine, outorg and
-;; navi-mode functionality still works with this file. See my
+;; [NOTE: For the sake of adding this library to MELPA, headlines
+;; had to be converted back from 'Org-mode style' to 'oldschool',
+;; and a few extra lines of required information had to be added on
+;; top of the MetaData section - just to comply with the required
+;; file formatting. All outshine, outorg and navi-mode functionality
+;; still works with this file. See my
 ;; [[https://github.com/tj64/iorg][iOrg]] repository for examples of
 ;; Emacs-Lisp and PicoLisp files structured 'the outshine way'.]
 
-;; `outorg' is like "reverse Org-Babel": editing of comment-sections from source
-;; code files in temporary Org-mode buffers instead of editing of Org-mode
-;; source-blocks in temporary source-code buffers.
+;; `outorg' is like "reverse Org-Babel": editing of comment-sections
+;; from source-code files in temporary Org-mode buffers instead of
+;; editing of Org-mode source-blocks in temporary source-code
+;; buffers.
 
-;; It should be used together with `outline-minor-mode' and `outshine.el'.
-;; Keep in mind, that `outorg' only works with outshine-style headlines like
-;; those produced by calling `comment-region' on Org-mode style headlines in a
-;; source-code buffer. Take this file as an example for suitable outline
+;; It should be used together with `outline-minor-mode' and
+;; `outshine.el'.  Keep in mind, that `outorg' only works with
+;; outshine-style headlines like those produced by calling
+;; `comment-region' on Org-mode style headlines in a source-code
+;; buffer. Take this file as an example for suitable outline
 ;; headlines in an Emacs Lisp buffer. In other major-modes, the
-;; `comment-start' character ';' of Emacs Lisp would be replaced by that of
-;; the respective major-mode, e.g. '#' in PicoLisp mode or '%' in LaTeX mode.
+;; `comment-start' character ';' of Emacs Lisp would be replaced by
+;; that of the respective major-mode, e.g. '#' in PicoLisp mode or
+;; '%' in LaTeX mode.
 
-;; `outorgs' main command is accessible via two different keybindings
-;; 1. with outline-minor-mode-prefix 'C-c'
+;; `outorgs' main command is accessible via two different
+;; keybindings
 
-;;  ,---------------------------
-;;  | C-c ' (outorg-edit-as-org)
-;;  `---------------------------
+;;  1. with outline-minor-mode-prefix 'C-c'
 
-;;  2. with outline-minor-mode-prefix 'M-#'
+;;   ,---------------------------
+;;   | C-c ' (outorg-edit-as-org)
+;;   `---------------------------
 
-;;  ,---------------------------
-;;  | M-# M-# (outorg-edit-as-org)
-;;  `---------------------------
+;;   2. with outline-minor-mode-prefix 'M-#'
 
-;; used in source-code buffers where `outline-minor-mode' is activated with
-;; `outshine' extensions. The Org-mode edit-buffer popped up by this command
-;; has `outorg-edit-minor-mode' activated, a minor-mode with only 2 commands:
+;;   ,---------------------------
+;;   | M-# M-# (outorg-edit-as-org)
+;;   `---------------------------
 
-;; ,----------------------------------------
-;; | M-# (outorg-copy-edits-and-exit)
-;; | C-x C-s (outorg-save-edits-to-tmp-file)
-;; `----------------------------------------
+;; used in source-code buffers where `outline-minor-mode' is
+;; activated with `outshine' extensions. The Org-mode edit-buffer
+;; popped up by this command has `outorg-edit-minor-mode' activated,
+;; a minor-mode with only 2 commands:
+
+;;   ,----------------------------------------
+;;   | M-# (outorg-copy-edits-and-exit)
+;;   | C-x C-s (outorg-save-edits-to-tmp-file)
+;;   `----------------------------------------
 
 ;; If you want to insert Org-mode source-code or example blocks in
-;; comment-sections, simply outcomment them in the outorg-edit buffer before
-;; calling `outorg-copy-edits-and-exit'.
+;; comment-sections, simply outcomment them in the outorg-edit
+;; buffer before calling `outorg-copy-edits-and-exit'.
 
 ;;;;; Installation
 
