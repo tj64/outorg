@@ -82,21 +82,31 @@
 ;; ;;  (require 'outorg)
 ;; ;; #+end_src
 
-;; in your .emacs.
+;; in your .emacs. Since outshine.el has a soft dependency on outorg
+;; and navi-mode.el has a strong dependency on outshine (and a soft
+;; dependency on outorg), it may be sufficient to just require
+;; navi-mode in case you use all three libraries (as long as Emacs
+;; can find all of them).
 
 ;;;;; Bugs and Shortcomings
 
-;; `outorg' is line-based, it only works with 'one-line' comments, i.e. with
-;; comment-sections like those produced by `comment-region' (a command that
-;; comments or uncomments each line in the region). Those special multi-line
-;; comments found in many programming languages are not recognized and lead to
-;; undefined behaviour.
+;; `outorg' is line-based, it only works with 'one-line' comments,
+;; i.e. with comment-sections like those produced by
+;; `comment-region' (a command that comments or uncomments each line
+;; in the region). Those special multi-line comments found in many
+;; programming languages are not recognized and lead to undefined
+;; behaviour.
+
+;; There is no comprehensive set of ERT tests defined for outorg
+;; yet, which would be important given that outorg transforms often
+;; important user files back and forth between two representations.
 
 ;;;;; Emacs Version
 
-;; `outorg.el' works with [GNU Emacs 24.2.1 (x86_64-unknown-linux-gnu, GTK+
-;; Version 3.6.4) of 2013-01-20 on eric]. No attempts of testing with older
-;; versions or other types of Emacs have been made (yet).
+;; `outorg.el' works with [GNU Emacs 24.2.1
+;; (x86_64-unknown-linux-gnu, GTK+ Version 3.6.4) of 2013-01-20 on
+;; eric]. No attempts of testing with older versions or other types
+;; of Emacs have been made (yet).
 
 
 ;;;; ChangeLog
