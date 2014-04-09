@@ -119,6 +119,7 @@
 
 (require 'outline)
 (require 'org)
+(require 'org-watchdoc nil t)
 
 ;;; Mode and Exporter Definitions
 ;;;; Outorg Edit minor-mode
@@ -244,6 +245,11 @@ them on-demand in the *outorg-edit-buffer*. The value of this variable is
    "# <<<\\*\\*\\* BEGIN EXPORT TEMPLATE [[:ascii:]]+"
    "# <<<\\*\\*\\* END EXPORT TEMPLATE \\*\\*\\*>>>[^*]*")
   "Regexp used to identify (and delete) export templates.")
+
+(defvar outorg-propagate-changes-p nil
+  "Non-nil means propagate changes to associated doc files.")
+;; (make-variable-buffer-local 'outorg-propagate-changes-p)
+
 
 ;;;; Hooks
 
@@ -503,7 +509,8 @@ of `outorg-temporary-directory'."
     (setq outorg-oldschool-elisp-headers-p nil)
     (setq outorg-insert-default-export-template-p nil)
     (setq outorg-ask-user-for-export-template-file-p nil)
-    (setq outorg-keep-export-template-p nil)))
+    (setq outorg-keep-export-template-p nil)
+    (setq outorg-propagate-changes-p nil)))
 
 ;;;;; Remove Trailing Blank Lines
 
@@ -862,6 +869,10 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
          'outorg-insert-export-template-file))
        (outorg-insert-default-export-template-p
         (outorg-insert-default-export-template))))
+    ;; update md5 for watchdoc
+    (when (and outorg-propagate-changes-p
+	       (require 'org-watchdoc nil t))
+      (org-watchdoc-set-md5))
     ;; reset buffer-undo-list
     (setq buffer-undo-list nil)))
 
@@ -1131,13 +1142,15 @@ Assume that edit-buffer major-mode has been set back to the
 
 With ARG, act conditional on the raw value of ARG:
 
-| prefix | raw | action 1          | action 2                         |
-|--------+-----+-------------------+----------------------------------|
-| C-u    | (4) | edit-whole-buffer | ---                              |
-| C-1    |   1 | edit-whole-buffer | insert default export-template   |
-| C-2    |   2 | edit-whole-buffer | ask user for template-file       |
-| C-3    |   3 | edit-whole-buffer | insert and keep default template |
-| C-4    |   4 | edit-whole-buffer | insert and keep template-file    |
+| prefix | raw | action 1          | action 2                       |
+|--------+-----+-------------------+--------------------------------|
+| C-u    | (4) | edit-whole-buffer | ---                            |
+| C-1    |   1 | edit-whole-buffer | insert default export-template |
+| C-2    |   2 | edit-whole-buffer | prompt user for template-file  |
+| C-3    |   3 | edit-whole-buffer | insert & keep default template |
+| C-4    |   4 | edit-whole-buffer | insert & keep template-file    |
+| C-5    |   5 | propagate changes | ---                            |
+
 "
   (interactive "P")
   (ignore-errors
@@ -1149,7 +1162,6 @@ With ARG, act conditional on the raw value of ARG:
            (error "Cannot edit read-only buffer")
          (setq inhibit-read-only t)
          (setq outorg-code-buffer-read-only-p t)))
-  ;; (and (eq major-mode 'message-mode)
   (and (derived-mode-p 'message-mode)
        (outorg-prepare-message-mode-buffer-for-editing))
   (and (eq major-mode 'picolisp-mode)
@@ -1157,7 +1169,8 @@ With ARG, act conditional on the raw value of ARG:
          (save-match-data
            (goto-char (point-max))
            (re-search-backward
-            (concat "(" (regexp-quote "********") ")") nil 'NOERROR)))
+            (concat "(" (regexp-quote "********") ")")
+	    nil 'NOERROR)))
        (outorg-prepare-iorg-edit-buffer-for-editing))
   (setq outorg-code-buffer-point-marker (point-marker))
   (save-excursion
@@ -1185,12 +1198,25 @@ With ARG, act conditional on the raw value of ARG:
         ((equal arg 4)
          (setq outorg-edit-whole-buffer-p t)
          (setq outorg-ask-user-for-export-template-file-p t)
-         (setq outorg-keep-export-template-p t))))
+         (setq outorg-keep-export-template-p t))
+        ((equal arg 5)
+         (setq outorg-propagate-changes-p t))))
   (and outshine-enforce-no-comment-padding-p
        (setq outorg-oldschool-elisp-headers-p t))
   (setq outorg-initial-window-config
         (current-window-configuration))
   (outorg-copy-and-convert))
+
+(defun outorg-edit-comments-and-propagate-changes ()
+  "Edit first buffer tree and propagate changes.
+Used to keep exported comment-sections in sync with their
+source-files."
+  (interactive)
+  (goto-char (point-min))
+  (unless (outline-on-heading-p 'INVISIBLE-OK)
+    (ignore-errors
+      (outline-next-heading)))
+  (outorg-edit-as-org 5))
 
 (defun outorg-copy-edits-and-exit ()
   "Replace code-buffer content with (converted) edit-buffer content and
@@ -1213,6 +1239,12 @@ With ARG, act conditional on the raw value of ARG:
 	(outorg-reset-global-vars))
     ;; edit-buffer modified
     (widen)
+    ;; propagate changes to associated doc files
+    (when (and outorg-propagate-changes-p
+	       (require 'org-watchdoc nil t))
+      (save-excursion
+	(goto-char (point-min))
+	(org-watchdoc-propagate-changes)))
     (let ((mode (outorg-get-buffer-mode
 		 (marker-buffer outorg-code-buffer-point-marker))))
       (and outorg-unindent-active-source-blocks-p
@@ -1411,6 +1443,7 @@ Otherwise, all languages found in `org-babel-load-languages' are mapped."
      minor-mode-list)
     ;; (message "Active modes are %s" active-modes)
     active-modes))
+
 
 ;;; Menus and Keys
 ;;;; Menus
