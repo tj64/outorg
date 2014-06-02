@@ -1136,6 +1136,7 @@ Assume that edit-buffer major-mode has been set back to the
         ))))
 
 ;;;; Commands
+;;;;; Edit and Exit
 
 (defun outorg-edit-as-org (&optional arg)
   "Convert and copy to temporary Org buffer
@@ -1207,16 +1208,7 @@ With ARG, act conditional on the raw value of ARG:
         (current-window-configuration))
   (outorg-copy-and-convert))
 
-(defun outorg-edit-comments-and-propagate-changes ()
-  "Edit first buffer tree and propagate changes.
-Used to keep exported comment-sections in sync with their
-source-files."
-  (interactive)
-  (goto-char (point-min))
-  (unless (outline-on-heading-p 'INVISIBLE-OK)
-    (ignore-errors
-      (outline-next-heading)))
-  (outorg-edit-as-org 5))
+
 
 (defun outorg-copy-edits-and-exit ()
   "Replace code-buffer content with (converted) edit-buffer content and
@@ -1292,48 +1284,9 @@ source-files."
 	 (outorg-prepare-iorg-edit-buffer-for-posting))
     (outorg-reset-global-vars)))
 
-(defun outorg-replace-source-blocks-with-results
-  (&optional arg &rest languages)
-  "Replace source-blocks with their results.
+;;;;; Insert Export Template
 
-Only source-blocks with ':export results' in their header
-arguments will be mapped.
 
-If LANGUAGES is non-nil, only those source-blocks with a
-language found in the list are mapped.
-
-If LANGUAGES is nil but a prefix-argument ARG is given, only the
-languages read from the mini-buffer (separated by blanks) are mapped.
-
-Otherwise, all languages found in `org-babel-load-languages' are mapped."
-  (interactive "P\n")
-  (let ((langs (or languages
-                   (and arg
-                        (split-string
-                         (read-string
-                          (concat "Org Babel languages separated by blanks: "))
-                         " " 'OMIT-NULLS))
-                   (mapcar
-                    (lambda (X) (symbol-name (car X)))
-                    org-babel-load-languages))))
-    (org-babel-map-src-blocks nil
-      (and
-       (string-equal
-        (cdr
-         (assoc
-          :exports
-          (org-babel-parse-header-arguments header-args)))
-        "results")
-       (member lang langs)
-       (org-babel-execute-src-block)
-       (let* ((block-start (org-babel-where-is-src-block-head))
-              (results-head (org-babel-where-is-src-block-result))
-              (results-body
-               (save-excursion
-                 (goto-char results-head)
-                 (forward-line)
-                 (point))))
-         (delete-region block-start results-body))))))
 
 ;; (defun outorg-toggle-export-template-insertion (&optional arg)
 ;;   "Toggles automatic insertion of export template into *outorg-edit-buffer*
@@ -1429,7 +1382,63 @@ Otherwise, all languages found in `org-babel-load-languages' are mapped."
      (insert "# <<<*** END EXPORT TEMPLATE ***>>>\n")
      (newline))))
 
+;;;;; Misc
+
 ;; courtesy to Trey Jackson (http://tinyurl.com/cbnlemg)
+(defun outorg-edit-comments-and-propagate-changes ()
+  "Edit first buffer tree and propagate changes.
+Used to keep exported comment-sections in sync with their
+source-files."
+  (interactive)
+  (goto-char (point-min))
+  (unless (outline-on-heading-p 'INVISIBLE-OK)
+    (ignore-errors
+      (outline-next-heading)))
+  (outorg-edit-as-org 5))
+
+(defun outorg-replace-source-blocks-with-results
+  (&optional arg &rest languages)
+  "Replace source-blocks with their results.
+
+Only source-blocks with ':export results' in their header
+arguments will be mapped.
+
+If LANGUAGES is non-nil, only those source-blocks with a
+language found in the list are mapped.
+
+If LANGUAGES is nil but a prefix-argument ARG is given, only the
+languages read from the mini-buffer (separated by blanks) are mapped.
+
+Otherwise, all languages found in `org-babel-load-languages' are mapped."
+  (interactive "P\n")
+  (let ((langs (or languages
+                   (and arg
+                        (split-string
+                         (read-string
+                          (concat "Org Babel languages separated by blanks: "))
+                         " " 'OMIT-NULLS))
+                   (mapcar
+                    (lambda (X) (symbol-name (car X)))
+                    org-babel-load-languages))))
+    (org-babel-map-src-blocks nil
+      (and
+       (string-equal
+        (cdr
+         (assoc
+          :exports
+          (org-babel-parse-header-arguments header-args)))
+        "results")
+       (member lang langs)
+       (org-babel-execute-src-block)
+       (let* ((block-start (org-babel-where-is-src-block-head))
+              (results-head (org-babel-where-is-src-block-result))
+              (results-body
+               (save-excursion
+                 (goto-char results-head)
+                 (forward-line)
+                 (point))))
+         (delete-region block-start results-body))))))
+
 (defun outorg-which-active-modes ()
   "Give a message of which minor modes are enabled in the current buffer."
   (interactive)
