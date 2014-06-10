@@ -956,14 +956,145 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
     ;; reset buffer-undo-list
     (setq buffer-undo-list nil)))
 
-;; default case outcommented org-mode headers
-;; TODO rename to outorg-convert-to-org
-(defun outorg-new-convert-to-org ()
-  "Convert buffer content to Org Syntax")
+(defun outorg-comment-at-bol-p ()
+  "Non-nil if comment-on-line starts at `point-at-bol'.
+This function does not move point."
+  (eq (outorg-comment-on-line-p) (point-at-bol)))
 
-;; special case oldschool elisp headers
-;; TODO rename to outorg-convert-oldschool-elisp-to-org
+(defun outorg-wrap-source-in-block (buffer-mode IN-BABEL-LANG-P
+						&optional
+						beg-marker
+						end-marker
+						KEEP-MARKERS-P)
+  "Wrap source code between BEG-MARKER and END-MARKER in src-block.
+
+When optional arguments BEG-MARKER and END-MARKER are given but
+
+ - are not markers
+ - do not point to current buffer
+ - do not fulfill the (BEG-MARKER < END-MARKER) relation
+ - there is only whitespace between them
+
+do nothing and return nil. Otherwise try `outorg-beg-src-marker'
+and `outorg-end-src-marker' instead.
+
+Search inward from BEG-MARKER and END-MARKER for
+non-whitespace. If and only if BEG-MARKER is still smaller than
+END-MARKER after this search wrap the source code between both
+points in an Org source-block or an Org example-block (the latter
+if the BUFFER-MODE is not recognized or is not part of the users
+`org-babel-load-languages', i.e. IN-BABEL-LANG-P is nil).
+
+When UNSET-MARKERS-P in non-nil unset markers before exiting."
+  (let ((beg (or beg-marker outorg-beg-src-marker))
+	(end (or end-marker outorg-end-src-marker)))
+     (message "WRAP: beg-mk: %s, end-mk: %s"
+	      (marker-position beg)
+	      (marker-position end))
+    (and (markerp beg)
+	 (eq (marker-buffer beg) (current-buffer))
+	 (markerp end)
+	 (eq (marker-buffer end) (current-buffer))
+	 (<  beg end)
+	 ;; skip over whitespace
+	 (save-excursion
+	   (move-marker beg
+			(progn
+			  (goto-char beg)
+			  (org-skip-whitespace)
+			  (point)))
+	   (move-marker end
+			(progn
+			  (goto-char end)
+			  (org-back-over-empty-lines)
+			  (point)))
+	   (when (< beg end)
+	     ;; beginning of block
+	     (goto-char beg)
+	     (newline)
+	     (forward-line -1)
+	     (insert
+	      (if IN-BABEL-LANG-P
+		  (concat
+		   "#+begin_src "
+		   (outorg-get-babel-name buffer-mode 'as-strg-p))
+		"#+begin_example"))
+	     (forward-line)
+	     ;; end of block
+	     (goto-char end)
+	     (newline)
+	     (forward-line -1)
+	     (insert
+	      (if IN-BABEL-LANG-P
+		  "#+end_src"
+		"#+end_example"))))
+	 (unless KEEP-MARKERS-P
+	   (move-marker beg nil)
+	   (move-marker end nil)))))
+
 (defun outorg-convert-to-org ()
+  "Convert buffer content to Org Syntax"
+  (let* ((buffer-mode
+	  (outorg-get-buffer-mode
+	   (marker-buffer outorg-code-buffer-point-marker)))
+         (in-org-babel-load-languages-p
+	  (outorg-in-babel-load-languages-p buffer-mode)))
+    (outorg-remove-trailing-blank-lines)
+    ;; Beginning of buffer
+    (save-excursion
+      (goto-char (point-min))
+      (unless (outorg-comment-at-bol-p)
+	(move-marker outorg-beg-src-marker point))
+      ;; Loop over rest of buffer
+      (let (beg) 
+	(while (and (< (point) (point-max))
+		    (setq beg (comment-search-forward
+			       (point-max) t)))
+	  (message "\n\n ---------\nBEFORE: beg-mk: %s, end-mk: %s"
+		   (marker-position outorg-beg-src-marker)
+		   (marker-position outorg-end-src-marker))
+	  (goto-char beg)
+	  (if (eq beg (point-at-bol))
+	    (let ((end (progn
+			 ;; first wrap preceding code in block
+			 (save-excursion
+			   (forward-line -1)
+			   ;; no comment-line before comment
+			   (unless (outorg-comment-at-bol-p)
+			     ;; begin source block marked
+			     (when (marker-position
+				    outorg-beg-src-marker)
+			       ;; move end-src-marker to comment start
+			       (move-marker outorg-end-src-marker
+					    (point))
+			       ;; wrap source
+			       (unless (eq outorg-beg-src-marker
+					   outorg-end-src-marker)
+				 (outorg-wrap-source-in-block
+				  buffer-mode
+				  in-org-babel-load-languages-p)))))
+			 ;; then find end of comment
+			 (unless (or (comment-forward)
+				     ;; Allow non-terminated comments.
+				     (eobp))
+			   (error "Can't find the comment end"))
+			 (point))))
+	    (save-excursion
+	      (forward-line)
+	      ;; when next line not a comment
+	      (unless (outorg-comment-at-bol-p)
+		;; move beg-src-marker to end of comment
+		(move-marker outorg-beg-src-marker end)))
+	    (uncomment-region beg end)
+	    (message "\n\nAFTER: beg-mk: %s, end-mk: %s"
+		     (marker-position outorg-beg-src-marker)
+		     (marker-position outorg-end-src-marker))
+	    )
+	    (forward-line))))))
+
+
+(defun outorg-convert-oldschool-elisp-to-org ()
+;; (defun outorg-convert-to-org ()
   "Convert buffer content to Org Syntax"
   (let* ((last-line-comment-p nil)
          (buffer-mode
