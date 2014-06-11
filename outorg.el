@@ -938,7 +938,9 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
           (funcall 'R-mode)
         (funcall mode)))
     ;; call conversion function
-    (outorg-convert-to-org)
+    (if outorg-oldschool-elisp-headers-p
+	(outorg-convert-oldschool-elisp-to-org)
+      (outorg-convert-to-org))
     ;; change major mode to org-mode
     (org-mode)
     ;; activate minor mode outorg-edit-minor-mode
@@ -1054,7 +1056,7 @@ exiting."
          (in-org-babel-load-languages-p
 	  (outorg-in-babel-load-languages-p buffer-mode)))
     (outorg-remove-trailing-blank-lines)
-    ;; Beginning of buffer
+    ;; Special case BOB
     (save-excursion
       (goto-char (point-min))
       (unless (outorg-comment-at-bol-p)
@@ -1066,8 +1068,9 @@ exiting."
 			       (point-max) t)))
 	  (goto-char beg)
 	  (if (eq beg (point-at-bol))
+	      ;; comments starts at BOL -> convert
 	      (let ((end (progn
-			   ;; first wrap preceding code in block
+			   ;; 1. wrap preceding code in block
 			   (save-excursion
 			     (forward-line -1)
 			     ;; no comment-line before comment
@@ -1075,20 +1078,21 @@ exiting."
 			       ;; begin source block marked
 			       (when (marker-position
 				      outorg-beg-src-marker)
-				 ;; move end-src-marker to comment start
+				 ;; move end-src-marker to comment
+				 ;; start
 				 (move-marker outorg-end-src-marker
 					      (point))
-				 ;; wrap source
 				 (unless
 				     (eq
 				      (marker-position
 				       outorg-beg-src-marker)
 				      (marker-position
 				       outorg-end-src-marker))
+				   ;; wrap source
 				   (outorg-wrap-source-in-block
 				    buffer-mode
 				    in-org-babel-load-languages-p)))))
-			   ;; then find end of comment
+			   ;; 2. find end of comment
 			   (unless (or (comment-forward)
 				       ;; Allow non-terminated comments.
 				       (eobp))
@@ -1103,7 +1107,9 @@ exiting."
 		    (move-marker outorg-beg-src-marker end)))
 		(message "\nuncomment-region: beg: %s, end: %s"
 			 beg end)
+		;; finally convert comment
 		(uncomment-region beg end))
+	    ;; comment does not start at BOL -> skip
 	    (forward-line)))))))
 
 
