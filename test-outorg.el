@@ -1,4 +1,4 @@
-;;; test-outorg.el --- ERT suite for outorg.el
+;;; outorg-test.el --- ERT suite for outorg.el
 
 ;; Author: Thorsten Jolitz <tjolitz AT gmail DOT com>
 ;; Version: 1.0
@@ -25,6 +25,11 @@
   (signal 'missing-test-dependency "outorg"))
 (unless (featurep 'ert-buffer)
   (signal 'missing-test-dependency "ert-buffer"))
+
+;;; Variables
+
+(defvar outorg-test-cmd ()
+  "Interactive Org command to be used in ERT test.")
 
 ;;; Convenience Functions for inserting Tests
 
@@ -102,41 +107,108 @@ test number of all following tests by 1."
 
 ;;; Setup Function
 
-(defun outorg-run-ert-test (fun &optional arg &rest
-				function-args)
+;; (defun outorg-run-ert-test (fun &optional arg &rest
+;; 				function-args)
+;;   (message "current-buf: %s" (current-buffer))
+;;   (let (;; (utree-before (progn
+;; 	;; 		(undo-tree-mode t)
+;; 	;; 		(undo-tree-visualize)
+;; 	;; 		(undo-tree-visualizer-quit)
+;; 	;; 		(undo-tree-count buffer-undo-tree)))
+;; 	(pref-arg (or arg '(4)))
+;;         ;; utree-after
+;; 	saved-undo-tree)
+;;     "Run do/undo ERT test for outorg and return buffer string."
+;;     (when (bufferp "*OUTORG-BEFORE-TEST*")
+;;       (kill-buffer "*OUTORG-BEFORE-TEST*"))
+;;     (when (bufferp "*OUTORG-AFTER-TEST*")
+;;       (kill-buffer "*OUTORG-AFTER-TEST*"))
+;;     (save-restriction
+;;       (widen)
+;;       (copy-to-buffer
+;;        (get-buffer-create "*OUTORG-BEFORE-TEST*")
+;;        (if (member pref-arg '((4)))
+;; 	   (point-min)
+;; 	 (save-excursion
+;; 	   (outline-previous-heading)
+;; 	   (point)))
+;;        (if (member pref-arg '((4)))
+;; 	   (point-max)
+;; 	 (save-excursion
+;; 	   (outline-end-of-heading)
+;; 	   (point))))
+;;       (outorg-edit-as-org pref-arg)
+;;       (undo-tree-mode t)
+;;       (if function-args
+;; 	  (funcall fun function-args)
+;; 	(call-interactively fun))
+;;       ;; HACK (otherwise buffer-undo-tree is nil)
+;;       (undo-tree-visualize)
+;;       (undo-tree-visualizer-quit)
+;;       (setq saved-undo-tree buffer-undo-tree)
+;;       (outorg-copy-edits-and-exit)
+;;       (outorg-edit-as-org pref-arg)
+;;       (undo-tree-mode t)
+;;       (org-set-local 'buffer-undo-tree saved-undo-tree)
+;;       (undo-tree-undo (undo-tree-count buffer-undo-tree))
+;;       (outorg-copy-edits-and-exit)
+;;       (copy-to-buffer
+;;        (get-buffer-create "*OUTORG-AFTER-TEST*")
+;;        (if (member pref-arg '((4)))
+;; 	   (point-min)
+;; 	 (save-excursion
+;; 	   (outline-previous-heading)
+;; 	   (point)))
+;;        (if (member pref-arg '((4)))
+;; 	   (point-max)
+;; 	 (save-excursion
+;; 	   (outline-end-of-heading)
+;; 	   (point)))))))
+      ;; (setq utree-after
+      ;; 	    (undo-tree-count buffer-undo-tree))
+      ;; (when (> utree-after utree-before)
+      ;; 	(undo-tree-undo (- utree-after utree-before))))))
+      ;; (buffer-substring-no-properties (point-min) (point-max)))))
+
+
+(defun outorg-test-ert-cmd (fun)
+  ;; &optional arg &rest function-args)
+  (interactive "COrg Command: ")
   (message "current-buf: %s" (current-buffer))
   (let (;; (utree-before (progn
 	;; 		(undo-tree-mode t)
 	;; 		(undo-tree-visualize)
 	;; 		(undo-tree-visualizer-quit)
 	;; 		(undo-tree-count buffer-undo-tree)))
-	(pref-arg (or arg '(4)))
+	;; (pref-arg (or arg '(4)))
+	(pref-arg '(4))
         ;; utree-after
 	saved-undo-tree)
-    "Run do/undo ERT test for outorg and return buffer string."
-    (when (bufferp "*OUTORG-BEFORE-TEST*")
-      (kill-buffer "*OUTORG-BEFORE-TEST*"))
-    (when (bufferp "*OUTORG-AFTER-TEST*")
-      (kill-buffer "*OUTORG-AFTER-TEST*"))
-    (save-restriction
-      (widen)
-      (copy-to-buffer
-       (get-buffer-create "*OUTORG-BEFORE-TEST*")
-       (if (member pref-arg '((4)))
-	   (point-min)
-	 (save-excursion
-	   (outline-previous-heading)
-	   (point)))
-       (if (member pref-arg '((4)))
-	   (point-max)
-	 (save-excursion
-	   (outline-end-of-heading)
-	   (point))))
+    ;; "Run do/undo ERT test for outorg and return buffer string."
+    ;; (when (bufferp "*OUTORG-BEFORE-TEST*")
+    ;;   (kill-buffer "*OUTORG-BEFORE-TEST*"))
+    ;; (when (bufferp "*OUTORG-AFTER-TEST*")
+    ;;   (kill-buffer "*OUTORG-AFTER-TEST*"))
+    ;; (save-restriction
+    ;;   (widen)
+    ;;   (copy-to-buffer
+    ;;    (get-buffer-create "*OUTORG-BEFORE-TEST*")
+    ;;    (if (member pref-arg '((4)))
+    ;; 	   (point-min)
+    ;; 	 (save-excursion
+    ;; 	   (outline-previous-heading)
+    ;; 	   (point)))
+    ;;    (if (member pref-arg '((4)))
+    ;; 	   (point-max)
+    ;; 	 (save-excursion
+    ;; 	   (outline-end-of-heading)
+    ;; 	   (point))))
       (outorg-edit-as-org pref-arg)
       (undo-tree-mode t)
-      (if function-args
-	  (funcall fun function-args)
-	(call-interactively fun))
+      ;; (if function-args
+      ;; 	  (funcall fun function-args)
+      ;; 	(call-interactively fun))
+      (call-interactively fun)
       ;; HACK (otherwise buffer-undo-tree is nil)
       (undo-tree-visualize)
       (undo-tree-visualizer-quit)
@@ -146,24 +218,21 @@ test number of all following tests by 1."
       (undo-tree-mode t)
       (org-set-local 'buffer-undo-tree saved-undo-tree)
       (undo-tree-undo (undo-tree-count buffer-undo-tree))
-      (outorg-copy-edits-and-exit)
-      (copy-to-buffer
-       (get-buffer-create "*OUTORG-AFTER-TEST*")
-       (if (member pref-arg '((4)))
-	   (point-min)
-	 (save-excursion
-	   (outline-previous-heading)
-	   (point)))
-       (if (member pref-arg '((4)))
-	   (point-max)
-	 (save-excursion
-	   (outline-end-of-heading)
-	   (point)))))))
-      ;; (setq utree-after
-      ;; 	    (undo-tree-count buffer-undo-tree))
-      ;; (when (> utree-after utree-before)
-      ;; 	(undo-tree-undo (- utree-after utree-before))))))
-      ;; (buffer-substring-no-properties (point-min) (point-max)))))
+      (outorg-copy-edits-and-exit)))
+      ;; (copy-to-buffer
+      ;;  (get-buffer-create "*OUTORG-AFTER-TEST*")
+      ;;  (if (member pref-arg '((4)))
+      ;; 	   (point-min)
+      ;; 	 (save-excursion
+      ;; 	   (outline-previous-heading)
+      ;; 	   (point)))
+      ;;  (if (member pref-arg '((4)))
+      ;; 	   (point-max)
+      ;; 	 (save-excursion
+      ;; 	   (outline-end-of-heading)
+      ;; 	   (point)))))))
+
+
 
 ;;; Tests
 
@@ -171,11 +240,41 @@ test number of all following tests by 1."
 
 ;;;;; Conversion to Org
 
-(ert-deftest outorg-test-1 ()
+(defun my-forward-back ()
+  (interactive)
+  (undo-tree-mode 1)
+  (save-excursion
+    (goto-char 318)
+    (newline)
+    (forward-line -1)
+    (insert "foo")
+    (goto-char (point-at-bol))
+    (kill-line)
+    (kill-line)
+    ;; (deactivate-mark 'FORCE)
+    ))
+
+(ert-deftest outorg-test-conversion ()
+  "Test outorg conversion to and from Org."
+  (let ((curr-buf-initial-state
+	 (with-current-buffer "*outorg-test-buffer*"
+	   ;; (deactivate-mark 'FORCE)
+	   (ert-Buf-from-buffer)))
+	(cmd outorg-test-cmd))
   (should
-   (ert-equal-buffer (insert "foo")
-		     (insert (buffer-name))
-		     '("foo"))))
+   (ert-equal-buffer
+    (outorg-test-ert-cmd)
+    curr-buf-initial-state
+    t))))
+
+
+(ert-deftest outorg-test-2 ()
+  "Test outorg conversion to and from Org."
+  (should
+   (ert-equal-buffer-explain
+    (insert "foo")
+    (concat ert-Buf-point-char ert-Buf-mark-char)
+    (concat ert-Buf-mark-char "fog" ert-Buf-point-char))))
 
 
 		     ;; (with-current-buffer "outorg-elisp-test.el"

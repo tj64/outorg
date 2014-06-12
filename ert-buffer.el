@@ -367,7 +367,9 @@ IGNORE-RETURN, EXP-RETURN, INTERACTIVE are described in
       (let (result)
 	(if (not ok-return)
 	    (push (list 'different-return-values
-			(ert--explain-not-equal (car test-result) exp-return))
+			;; (ert--explain-not-equal (car test-result) exp-return))
+			(ert--explain-equal-rec (car test-result) exp-return))
+
 		  result))
 	(if (not ok-point)
 	    (push (list 'different-points
@@ -376,7 +378,10 @@ IGNORE-RETURN, EXP-RETURN, INTERACTIVE are described in
 		  result))
 	(if (not ok-string)
 	    (push (list 'different-buffer-contents
-			(ert--explain-not-equal
+			;; (ert--explain-not-equal
+			;;  (ert-Buf-content (cdr test-result))
+			;;  (ert-Buf-content exp-buf)))
+			(ert--explain-equal-rec
 			 (ert-Buf-content (cdr test-result))
 			 (ert-Buf-content exp-buf)))
 		  result))
