@@ -41,62 +41,10 @@
 (defvar outorg-test-saved-prefix-arg nil
   "Prefix arg to be used in ERT test.")
 
-;;; Non-interactive Functions
-;;;; Insert Test Templates
-
-;; FIXME
-(defun outorg-get-preceeding-test-number ()
-  "Return number of preceeding test or 0."
-  (save-excursion
-      (if (re-search-backward
-	      (concat
-	       "\\(^\(ert-deftest outorg-test-\\)"
-	       "\\([[:digit:]]+\\)"
-	       "\\( ()$\\)") (point-min) 'NOERROR)
-	  (string-to-number (match-string 2)) 0)))
-	  
-;; FIXME
-(defun outorg-change-ert-test-numbers (&optional op step beg end)
-  "Change test-number with OP by STEP for next tests or in BEG END."
-  (let ((incop (or op '+))
-	(incstep (or step 1))
-	(maxpos (or end (point-max))))
-    (save-excursion
-      (when beg (goto-char beg))
-      (while (re-search-forward
-	      (concat
-	       "\\(^\(ert-deftest outorg-test-\\)"
-	       "\\([[:digit:]]+\\)"
-	       "\\( ()$\\)") maxpos 'NOERROR)
-	(replace-match
-	  (eval
-	   `(number-to-string
-	     (,incop (string-to-number (match-string 2))
-		     ,incstep)))
-	   nil nil nil 2)))))
-
-;; FIXME
-(defun outorg-insert-ert-test-and-renumber ()
-  "Insert ert-test template at point.
-Make test number 1 or (1+ number of preceeding test). Increase
-test number of all following tests by 1."
-  (interactive)
-  (insert
-   (format "%s%d%s\n%S\n%s\n%s\n%S%s\n"
-	   '\(ert-deftest\ outorg-test-
-	   (1+ (outorg-get-preceeding-test-number))
-	   '\ \(\)
-	   "See docstring of `outorg-test-1' for more info."
-	   '\(should\ \(equal
-	   '(outorg \"foo\")
-	   "foo"
-	   '\)\)\)))
-  (indent-region (save-excursion (backward-sexp) (point)) (point))
-  (outorg-change-ert-test-numbers))
-
-;;;; Setup Function
+;;; Functions
 
 (defun outorg-test-cmd ()
+  "Command to be used inside `ert-deftest'"
   (interactive)
   (let ((pref-arg '(4))
 	saved-undo-tree)
@@ -119,11 +67,18 @@ test number of all following tests by 1."
     (outorg-copy-edits-and-exit)))
 
 
-;;; Commands 
-;;;; Run ERT Tests
-
 (defun outorg-test-run-ert (org-cmd)
-  "Prepare and run ERT tests."
+  "Prepare and run ERT test.
+
+This command records the major-mode of current-buffer in global
+variable `outorg-test-saved-major-mode', the given
+prefix-argument in `outorg-test-saved-prefix-arg' and the given
+ORG-CMD in `outorg-test-saved-org-cmd', and it copies the content
+of current buffer into a temporary *outorg-test-buffer* and sets its major-mode.
+
+After this preparation it calls ERT test `outorg-test-conversion'
+that makes use of the *outorg-test-buffer* and the global
+variables mentioned above."
   (interactive "P\nCOrg Command: ")
   (let ((old-buf (current-buffer))
 	(maj-mode (outorg-get-buffer-mode)))
@@ -138,7 +93,9 @@ test number of all following tests by 1."
 	(erase-buffer)
 	(insert-buffer-substring old-buf)
 	(funcall maj-mode)
-	(call-interactively 'ert-run-tests-interactively)))))
+	;; (call-interactively 'ert-run-tests-interactively)
+	(funcall 'ert-run-tests-interactively
+		 "outorg-test-conversion")))))
 
 ;;; Tests
 
@@ -194,4 +151,7 @@ effects of the conversion process per se."
       t))))
 
 ;;; Run hooks and provide
+
+(provide 'outorg-test')
+
 ;;; outorg-test.el ends here
