@@ -1630,23 +1630,6 @@ With ARG, act conditional on the raw value of ARG:
      (insert "# <<<*** END EXPORT TEMPLATE ***>>>\n")
      (newline))))
 
-;;;;; Run ERT Tests
-
-(defun outorg-run-ert-tests-interactively ()
-  "Prepare and run ERT tests."
-  (interactive) ;"COrg Command: ")	
-  (let ((old-buf (current-buffer))
-	(maj-mode (outorg-get-buffer-mode)))
-	;; (cmd (list org-cmd)))
-  (save-restriction
-    (widen)
-    (with-current-buffer
-	(get-buffer-create "*outorg-test-buffer*")
-      (erase-buffer)
-      (insert-buffer-substring old-buf)
-      ;; (setq outorg-test-cmd cmd)
-      (funcall maj-mode)
-      (call-interactively 'ert-run-tests-interactively)))))
 
 ;;;;; Misc
 

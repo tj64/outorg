@@ -229,7 +229,7 @@ ARG may be one of the types described in
 	      default
 	    input))))
 
-(defun ert--run-test-with-buffer (buf form interactive)
+4(defun ert--run-test-with-buffer (buf form interactive)
   "With a buffer filled with `ert-Buf' BUF evaluate function form FORM.
 Return a cons consisting of the return value and a `ert-Buf'.  If
 INTERACTIVE is non-nil FORM is evaluated in an interactive

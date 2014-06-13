@@ -19,6 +19,10 @@
 ;;   :END:
 
 
+;;; Requires
+
+(require 'ert-buffer)
+
 ;;; Dependencies
 
 (unless (featurep 'outorg)
@@ -28,11 +32,19 @@
 
 ;;; Variables
 
-(defvar outorg-test-cmd ()
-  "Interactive Org command to be used in ERT test.")
+(defvar outorg-test-saved-org-cmd ()
+  "Org command to be used in ERT test.")
 
-;;; Convenience Functions for inserting Tests
+(defvar outorg-test-saved-major-mode nil
+  "Major mode to be used in ERT test.")
 
+(defvar outorg-test-saved-prefix-arg nil
+  "Prefix arg to be used in ERT test.")
+
+;;; Non-interactive Functions
+;;;; Insert Test Templates
+
+;; FIXME
 (defun outorg-get-preceeding-test-number ()
   "Return number of preceeding test or 0."
   (save-excursion
@@ -43,7 +55,7 @@
 	       "\\( ()$\\)") (point-min) 'NOERROR)
 	  (string-to-number (match-string 2)) 0)))
 	  
-;; fixme
+;; FIXME
 (defun outorg-change-ert-test-numbers (&optional op step beg end)
   "Change test-number with OP by STEP for next tests or in BEG END."
   (let ((incop (or op '+))
@@ -63,7 +75,7 @@
 		     ,incstep)))
 	   nil nil nil 2)))))
 
-
+;; FIXME
 (defun outorg-insert-ert-test-and-renumber ()
   "Insert ert-test template at point.
 Make test number 1 or (1+ number of preceeding test). Increase
@@ -82,26 +94,51 @@ test number of all following tests by 1."
   (indent-region (save-excursion (backward-sexp) (point)) (point))
   (outorg-change-ert-test-numbers))
 
-;;; Setup Function
+;;;; Setup Function
 
-(defun outorg-test-ert-cmd (fun)
-  (interactive "COrg Command: ")
-  (message "current-buf: %s" (current-buffer))
+(defun outorg-test-cmd ()
+  (interactive)
   (let ((pref-arg '(4))
 	saved-undo-tree)
-      (outorg-edit-as-org pref-arg)
-      (undo-tree-mode t)
-      (call-interactively fun)
-      ;; HACK (otherwise buffer-undo-tree is nil)
-      (undo-tree-visualize)
-      (undo-tree-visualizer-quit)
-      (setq saved-undo-tree buffer-undo-tree)
-      (outorg-copy-edits-and-exit)
-      (outorg-edit-as-org pref-arg)
-      (undo-tree-mode t)
-      (org-set-local 'buffer-undo-tree saved-undo-tree)
-      (undo-tree-undo (undo-tree-count buffer-undo-tree))
-      (outorg-copy-edits-and-exit)))
+    (funcall outorg-test-saved-major-mode)
+    (outorg-edit-as-org
+     outorg-test-saved-prefix-arg)
+    (undo-tree-mode t)
+    (call-interactively
+     outorg-test-saved-org-cmd)
+    ;; necessary (?) HACK to fill buffer-undo-tree
+    (undo-tree-visualize)
+    (undo-tree-visualizer-quit)
+    (setq saved-undo-tree buffer-undo-tree)
+    (outorg-copy-edits-and-exit)
+    (outorg-edit-as-org 
+     outorg-test-saved-prefix-arg)
+    (undo-tree-mode t)
+    (org-set-local 'buffer-undo-tree saved-undo-tree)
+    (undo-tree-undo (undo-tree-count buffer-undo-tree))
+    (outorg-copy-edits-and-exit)))
+
+
+;;; Commands 
+;;;; Run ERT Tests
+
+(defun outorg-test-run-ert (org-cmd)
+  "Prepare and run ERT tests."
+  (interactive "P\nCOrg Command: ")
+  (let ((old-buf (current-buffer))
+	(maj-mode (outorg-get-buffer-mode)))
+    ;; necessary (?) HACK
+    (setq outorg-test-saved-org-cmd org-cmd)
+    (setq outorg-test-saved-major-mode maj-mode)    
+    (setq outorg-test-saved-prefix-arg current-prefix-arg)
+    (save-restriction
+      (widen)
+      (with-current-buffer
+	  (get-buffer-create "*outorg-test-buffer*")
+	(erase-buffer)
+	(insert-buffer-substring old-buf)
+	(funcall maj-mode)
+	(call-interactively 'ert-run-tests-interactively)))))
 
 ;;; Tests
 
@@ -109,78 +146,98 @@ test number of all following tests by 1."
 
 ;;;;; Conversion to Org
 
-(defun my-forward-back ()
-  (interactive)
-  (undo-tree-mode 1)
-  (save-excursion
-    (goto-char 318)
-    (newline)
-    (forward-line -1)
-    (insert "foo")
-    (goto-char (point-at-bol))
-    (kill-line)
-    (kill-line)
-    ;; (deactivate-mark 'FORCE)
-    ))
+;; (defun my-forward-back ()
+;;   (interactive)
+;;   (undo-tree-mode 1)
+;;   (save-excursion
+;;     (goto-char 318)
+;;     (newline)
+;;     (forward-line -1)
+;;     (insert "foo")
+;;     (goto-char (point-at-bol))
+;;     (kill-line)
+;;     (kill-line)
+;;     ;; (deactivate-mark 'FORCE)
+;;     ))
 
 (ert-deftest outorg-test-conversion ()
-  "Test outorg conversion to and from Org."
-  (let ((curr-buf-initial-state
-	 (with-current-buffer "*outorg-test-buffer*"
-	   ;; (deactivate-mark 'FORCE)
-	   (ert-Buf-from-buffer)))
-	(cmd outorg-test-cmd))
-  (should
-   (ert-equal-buffer
-    (outorg-test-ert-cmd)
-    curr-buf-initial-state
-    t))))
+  "Test outorg conversion to and from Org.
 
-(ert-deftest outorg-test-2 ()
-  "Test the conversion to and from Org via outorg.
-
-For simplicity all outorg tests assume that point is in the
-original programming language buffer to be converted to Org-mode
-for text editing, exporting, or whatever.
+This test assumes that it is called via user command
+`outorg-test-run-ert' with point in the original programming
+language buffer to be converted to Org-mode, and with the prefix
+argument that should be used for `outorg-edit-as-org'. It further
+relies on the `ert-buffer' library for doing its work.
 
 Since outorg is about editing (and thus modifying) a buffer in
 Org-mode, defining the expected outcome manually would be bit
 cumbersome. Therefore so called 'do/undo' tests (invented and
 named by the author) are introduced:
 
- - do :: convert to org, save original state before editing, edit in
-         org, produce and save the diffs between original and final
-         state, convert back from org
- - undo :: convert to org again, undo the saved diffs, convert back
-           from org
+ - do :: convert to org, save original state before editing, edit
+         in org, produce and save the diffs between original and
+         final state, convert back from org
 
-After such an do/undo cyle `compare-buffer-substrings' of
-'before' and 'after' state of original buffer. They should be
-equal.
+ - undo :: convert to org again, undo the saved diffs, convert
+           back from org
 
-Further test topics are point-position and marker existance and
-position. "
-      (should (equal (current-buffer) "outorg-elisp-test.el")))
+After such an do/undo cyle the test buffer should be in exactly
+the same state as before the test, i.e.
+
+ - buffer content after the test should be string-equal to buffer
+   content before
+
+ - point should be in the same position
+
+ - the mark should be in the same position
+
+These are actually the three criteria checked by the 'ert-buffer'
+library, and when one or more of the checks returns nil, the ert test
+fails.
+
+This test is a one-size-fits-all test for outorg, since it
+allows, when called via command `outorg-test-run-ert', to execute
+arbitrary Org-mode commands in the *outorg-edit-buffer* and undo
+the changes later on, checking for any undesired permanent side
+effects of the conversion process per se."
+  (let ((curr-buf-initial-state
+	 (with-current-buffer "*outorg-test-buffer*"
+	   ;; (deactivate-mark 'FORCE)
+	   (ert-Buf-from-buffer))))
+    ;; (cmd outorg-test-cmd))
+    (should
+     (ert-equal-buffer
+      (outorg-test-cmd)
+      curr-buf-initial-state
+      t))))
+
+;; (ert-deftest outorg-test-2 ()
+;;   "Test the conversion to and from Org via outorg.
+
+;;       (should (equal (current-buffer) "outorg-elisp-test.el")))
 
 
 
-;;;;; Conversion from Org
+;; ;;;;; Conversion from Org
 
-;;;; Do/Undo Tests
+;; ;;;; Do/Undo Tests
 
-;;  1. Call `outorg-edit-as-org'
-;;  2. Edit org buffer
-;;  3. Call `outorg-copy-edits-and-exit'
-;;  4. Call `outorg-edit-as-org' again
-;;  5. Undo edits from (2)
-;;  6. Call `outorg-copy-edits-and-exit' again
-;;  7. Test equality of buffers:
-;;     - buffer-size
-;;     - compare-buffer-substrings
+;; ;;  1. Call `outorg-edit-as-org'
+;; ;;  2. Edit org buffer
+;; ;;  3. Call `outorg-copy-edits-and-exit'
+;; ;;  4. Call `outorg-edit-as-org' again
+;; ;;  5. Undo edits from (2)
+;; ;;  6. Call `outorg-copy-edits-and-exit' again
+;; ;;  7. Test equality of buffers:
+;; ;;     - buffer-size
+;; ;;     - compare-buffer-substrings
 
 
-;;;;; Unedited 
+;; ;;;;; Unedited 
 
-;;  8. Test if `buffer-modified-p' is nil
+;; ;;  8. Test if `buffer-modified-p' is nil
 
-;;;;; Edited
+;; ;;;;; Edited
+
+;;; Run hooks and provide
+;;; outorg-test.el ends here
