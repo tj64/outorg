@@ -142,24 +142,6 @@ test number of all following tests by 1."
 
 ;;; Tests
 
-;;;; Test Position of Point
-
-;;;;; Conversion to Org
-
-;; (defun my-forward-back ()
-;;   (interactive)
-;;   (undo-tree-mode 1)
-;;   (save-excursion
-;;     (goto-char 318)
-;;     (newline)
-;;     (forward-line -1)
-;;     (insert "foo")
-;;     (goto-char (point-at-bol))
-;;     (kill-line)
-;;     (kill-line)
-;;     ;; (deactivate-mark 'FORCE)
-;;     ))
-
 (ert-deftest outorg-test-conversion ()
   "Test outorg conversion to and from Org.
 
@@ -210,34 +192,6 @@ effects of the conversion process per se."
       (outorg-test-cmd)
       curr-buf-initial-state
       t))))
-
-;; (ert-deftest outorg-test-2 ()
-;;   "Test the conversion to and from Org via outorg.
-
-;;       (should (equal (current-buffer) "outorg-elisp-test.el")))
-
-
-
-;; ;;;;; Conversion from Org
-
-;; ;;;; Do/Undo Tests
-
-;; ;;  1. Call `outorg-edit-as-org'
-;; ;;  2. Edit org buffer
-;; ;;  3. Call `outorg-copy-edits-and-exit'
-;; ;;  4. Call `outorg-edit-as-org' again
-;; ;;  5. Undo edits from (2)
-;; ;;  6. Call `outorg-copy-edits-and-exit' again
-;; ;;  7. Test equality of buffers:
-;; ;;     - buffer-size
-;; ;;     - compare-buffer-substrings
-
-
-;; ;;;;; Unedited 
-
-;; ;;  8. Test if `buffer-modified-p' is nil
-
-;; ;;;;; Edited
 
 ;;; Run hooks and provide
 ;;; outorg-test.el ends here
