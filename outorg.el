@@ -1029,8 +1029,9 @@ block."
 				  (comment-search-forward
 				   (point-max) t)))))
 	(goto-char outorg-beg-comment-marker)
-	(when (eq (marker-position outorg-beg-comment-marker)
-		  (point-at-bol))
+	(if (not (eq (marker-position outorg-beg-comment-marker)
+		     (point-at-bol)))
+	    (forward-line)
 	  ;; comments starts at BOL -> convert
 	  (if (marker-position outorg-beg-src-marker)
 	      (move-marker outorg-end-src-marker
@@ -1055,7 +1056,12 @@ block."
 	    (outorg-wrap-source-in-block
 	     babel-lang example-block-p))
 	  ;; uncomment region
-	  (when (< outorg-beg-comment-marker outorg-beg-src-marker)
+	  ;; special case only comments and whitespace in buffer
+	  (when (and (eq (marker-position outorg-beg-comment-marker) 1)
+		     (eq (marker-position outorg-beg-src-marker) 1))
+	    (move-marker outorg-beg-src-marker (point-max)))
+	  (when (< outorg-beg-comment-marker
+		   outorg-beg-src-marker)
 	    (uncomment-region
 	     outorg-beg-comment-marker outorg-beg-src-marker)
 	    (and (marker-position outorg-end-src-marker)
