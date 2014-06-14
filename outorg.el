@@ -981,13 +981,8 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
       (outorg-convert-oldschool-elisp-buffer-to-outshine)
       ;; reset var to original state after conversion
       (setq outorg-oldschool-elisp-headers-p t))
-    ;; (outorg-convert-oldschool-elisp-to-org))
     ;; call conversion function
     (outorg-convert-to-org)
-    ;; ;; call conversion function
-    ;; (if outorg-oldschool-elisp-headers-p
-    ;; 	(outorg-convert-oldschool-elisp-to-org)
-    ;;   (outorg-convert-to-org))
     ;; change major mode to org-mode
     (org-mode)
     ;; activate minor mode outorg-edit-minor-mode
@@ -1114,109 +1109,6 @@ block."
 	  (move-marker outorg-end-src-marker nil)
 	  (move-marker outorg-beg-comment-marker nil))))))
 		
-
-;; (defun outorg-convert-oldschool-elisp-to-org ()
-;; ;; (defun outorg-convert-to-org ()
-;;   "Convert buffer content to Org Syntax"
-;;   (let* ((last-line-comment-p nil)
-;;          (buffer-mode
-;; 	   (outorg-get-buffer-mode
-;; 	    (marker-buffer outorg-code-buffer-point-marker)))
-;;          (in-org-babel-load-languages-p
-;; 	  (outorg-in-babel-load-languages-p buffer-mode)))
-;;     (save-excursion
-;;       (goto-char (point-min))
-;;       (outorg-remove-trailing-blank-lines)
-;;       (while (not (eobp))
-;;         (cond
-;;          ;; empty line (do nothing)
-;;          ((looking-at "^[[:space:]]*$"))
-;;          ;; comment line after comment line or at
-;;          ;; beginning of buffer
-;;          ((and
-;;            (save-excursion
-;;              (eq (outorg-comment-on-line-p) (point-at-bol)))
-;;            (or (bobp) last-line-comment-p))
-;;           (if (and outorg-oldschool-elisp-headers-p
-;;                    (looking-at "^;;;+ "))
-;;               ;; deal with oldschool elisp headers
-;;               (let ((elisp-header-level
-;;                      (- (length (match-string-no-properties 0)) 3)))
-;;                 (uncomment-region (point-at-bol) (point-at-eol))
-;;                 (save-excursion
-;;                   (dotimes (i elisp-header-level) (insert "*"))
-;;                   (insert " ")))
-;;             ;; orgmode-style headers
-;;             (uncomment-region (point-at-bol) (point-at-eol)))
-;;           (setq last-line-comment-p t))
-;;          ;; line of code after comment line
-;;          ((and
-;;            (save-excursion
-;;              (not (eq (outorg-comment-on-line-p) (point-at-bol))))
-;;            last-line-comment-p)
-;;           (newline)
-;;           (forward-line -1)
-;;           (insert
-;;            (if in-org-babel-load-languages-p
-;;                (concat
-;;                 "#+begin_src "
-;; 		(outorg-get-babel-name buffer-mode 'as-strg-p))
-;;              "#+begin_example"))
-;;           (forward-line)
-;;           (setq last-line-comment-p nil))
-;;          ;; comment line after line of code
-;;          ((and
-;;            (save-excursion
-;;              (eq (outorg-comment-on-line-p) (point-at-bol)))
-;;            (not last-line-comment-p))
-;;           (if (and outorg-oldschool-elisp-headers-p
-;;                    (looking-at "^;;;+ "))
-;;               ;; deal with oldschool elisp headers
-;;               (let ((elisp-header-level
-;;                      (- (length (match-string-no-properties 0)) 3)))
-;;                 (uncomment-region (point-at-bol) (point-at-eol))
-;;                 (save-excursion
-;;                   (dotimes (i elisp-header-level) (insert "*"))
-;;                   (insert " ")))
-;;             ;; orgmode-style headers
-;;             (uncomment-region (point-at-bol) (point-at-eol)))
-;;           (save-excursion
-;;             (forward-line -1)
-;;             (unless (looking-at "^[[:space:]]*$")
-;;               (newline))
-;;             (if in-org-babel-load-languages-p
-;;                 (insert "#+end_src")
-;;               (insert "#+end_example"))
-;;             (newline))
-;;           (setq last-line-comment-p t))
-;;          ;; last line after line of code
-;;          ((and
-;;            (eq (line-number-at-pos)
-;;                (1- (count-lines (point-min) (point-max))))
-;;            (not last-line-comment-p))
-;;           (goto-char (point-max))
-;;           (unless (looking-at "^[[:space:]]*$")
-;;             (newline))
-;;           (if in-org-babel-load-languages-p
-;;               (insert "#+end_src")
-;;             (insert "#+end_example"))
-;;           (newline))
-;;          ;; line of code after line of code
-;;          (t
-;;           (setq last-line-comment-p nil)))
-;;         ;; continue loop
-;;         (progn
-;;           (forward-line)
-;;           (and (eobp)
-;;                (looking-at "^[[:space:]]*$")
-;;                (not last-line-comment-p)
-;;                (save-excursion
-;;                  (forward-line -1)
-;;                  (not (looking-at "^[ \t]*#\\+end_?")))
-;;                (if in-org-babel-load-languages-p
-;;                    (insert "#+end_src")
-;;                  (insert "#+end_example"))))))))
-
 
 (defun outorg-indent-active-source-blocks (mode-name)
   "Indent active source-blocks after conversion to Org.
