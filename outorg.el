@@ -1046,7 +1046,7 @@ block."
 	  (not
 	   (outorg-in-babel-load-languages-p buffer-mode))))
     (outorg-remove-trailing-blank-lines)
-    ;; reset markers
+    ;; reset (left-over) markers
     (move-marker outorg-beg-src-marker nil)
     (move-marker outorg-end-src-marker nil)
     (move-marker outorg-beg-comment-marker nil)
@@ -1103,12 +1103,12 @@ block."
 	    (uncomment-region
 	     outorg-beg-comment-marker outorg-beg-src-marker)
 	    (and (marker-position outorg-end-src-marker)
+		 (> (marker-position outorg-end-src-marker) 1)
 		 (goto-char outorg-end-src-marker)))
 	  ;; reset markers
 	  (move-marker outorg-beg-src-marker nil)
 	  (move-marker outorg-end-src-marker nil)
 	  (move-marker outorg-beg-comment-marker nil))))))
-		
 
 (defun outorg-indent-active-source-blocks (mode-name)
   "Indent active source-blocks after conversion to Org.
