@@ -1082,12 +1082,28 @@ block."
 			   (point)))
 	    (move-marker outorg-end-src-marker
 			 (progn
-			   (if (comment-search-forward
-				(point-max) t)
-			       (beginning-of-line)
-			     (goto-char (point-max)))
+			   (while (and
+				   (< (point) (point-max))
+				   (not
+				    (eq (comment-search-forward
+					 (point-max) t)
+					(point-at-bol)))))
+			   (if (eq (point) 1)
+			       (goto-char (point-max))
+			     (beginning-of-line)
+			     (point))
 			   (forward-comment -1000)
 			   (point))))
+	    ;; (move-marker outorg-end-src-marker
+	    ;; 		 (progn
+	    ;; 		   (if (eq (comment-search-forward
+	    ;; 			    (point-max) t)
+	    ;; 			   (point-at-bol))
+	    ;; 		       (beginning-of-line)
+	    ;; 		     (goto-char (point-max)))
+	    ;; 		   (forward-comment -1000)
+	    ;; 		   (point)))
+	    )
 	  ;; wrap content in block
 	  (when (< outorg-beg-src-marker outorg-end-src-marker)
 	    (outorg-wrap-source-in-block
@@ -1234,6 +1250,83 @@ Assume that edit-buffer major-mode has been set back to the
                  (replace-match replacement-string nil nil nil 2)))
             (comment-region (point-at-bol) (point-at-eol)))))
         (forward-line)))))
+
+;; (defun outorg-convert-back-to-code ()
+;;   "Convert edit-buffer content back to programming language syntax.
+;; Assume that edit-buffer major-mode has been set back to the
+;;   programming-language major-mode of the associated code-buffer
+;;   before this function is called."
+;;   (let* ((inside-code-or-example-block-p nil)
+;;          (comment-style "plain")
+;;          (buffer-mode (outorg-get-buffer-mode))
+;;          (in-org-babel-load-languages-p
+;; 	  (outorg-in-babel-load-languages-p buffer-mode)))
+;;     (save-excursion
+;;       (goto-char (point-min))
+;;       (ignore-errors
+;;         (and
+;;          (looking-at outorg-export-template-regexp)
+;;          (replace-match "")))
+;;       (while (not (eobp))
+;;         (cond
+;;          ;; empty line (do nothing)
+;;          ((looking-at "^[[:space:]]*$"))
+;;          ;; begin code/example block
+;;          ((looking-at "^[ \t]*#\\+begin_?")
+;;           (if (or (and (not in-org-babel-load-languages-p)
+;;                        (looking-at "^[ \t]*#\\+begin_example"))
+;;                   (and in-org-babel-load-languages-p
+;;                        (looking-at
+;;                         (format "^[ \t]*#\\+begin_src %s"
+;; 				(outorg-get-babel-name
+;; 				 buffer-mode 'as-strg-p)))))
+;;               (progn
+;;                 (kill-whole-line)
+;;                 (forward-line -1)
+;;                 (setq inside-code-or-example-block-p t))
+;;             (save-excursion
+;;               (insert "!!!")
+;;               (comment-region (point-at-bol) (point-at-eol))
+;;               (beginning-of-line)
+;;               (and (looking-at "\\(^.+\\)\\(!!![[:space:]]*#\\+\\)")
+;;                    (replace-match "#+" nil nil nil 2)))))
+;;          ;; end code/example block
+;;          ((looking-at "^[ \t]*#\\+end_?")
+;;           (if (or (and (not in-org-babel-load-languages-p)
+;;                        (looking-at "^[ \t]*#\\+end_example"))
+;;                   (and in-org-babel-load-languages-p
+;;                        inside-code-or-example-block-p
+;;                        (looking-at
+;;                         (format "^[ \t]*#\\+end_src"))))
+;;               (progn
+;;                 (kill-whole-line)
+;;                 (forward-line -1)
+;;                 (setq inside-code-or-example-block-p nil))
+;;             (save-excursion
+;;               (insert "!!!")
+;;               (comment-region (point-at-bol) (point-at-eol))
+;;               (beginning-of-line)
+;;               (and (looking-at "\\(^.+\\)\\(!!![[:space:]]*#\\+\\)")
+;;                    (replace-match "#+" nil nil nil 2)))))
+;;          ;; line inside code/example block (do nothing)
+;;          (inside-code-or-example-block-p)
+;;          ;; not-empty line outside code/example block
+;;          (t
+;;           (if (and outorg-oldschool-elisp-headers-p
+;;                    (looking-at "^[*]+ "))
+;;               ;; deal with oldschool elisp headers (;;;+ )
+;;               (let* ((org-header-level
+;;                       (1- (length (match-string-no-properties 0))))
+;;                      (replacement-string
+;;                       (let ((strg ";"))
+;;                         (dotimes (i (1- org-header-level) strg)
+;;                           (setq strg (concat strg ";"))))))
+;;                 (comment-region (point-at-bol) (point-at-eol))
+;;                 (and
+;;                  (looking-at "\\(;;\\)\\( [*]+\\)\\( \\)")
+;;                  (replace-match replacement-string nil nil nil 2)))
+;;             (comment-region (point-at-bol) (point-at-eol)))))
+;;         (forward-line)))))
 
 (defun outorg-replace-code-with-edits ()
   "Replace code-buffer contents with edits."
