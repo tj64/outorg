@@ -1023,10 +1023,11 @@ block."
 		       (point))))
       ;; loop over rest of buffer
       (while (and (< (point) (point-max))
-		  (move-marker outorg-beg-comment-marker
-			       (progn
-				 (comment-search-forward
-				  (point-max) t))))
+		  (marker-position
+		   (move-marker outorg-beg-comment-marker
+				(progn
+				  (comment-search-forward
+				   (point-max) t)))))
 	(goto-char outorg-beg-comment-marker)
 	(when (eq (marker-position outorg-beg-comment-marker)
 		  (point-at-bol))
@@ -1057,7 +1058,8 @@ block."
 	  (when (< outorg-beg-comment-marker outorg-beg-src-marker)
 	    (uncomment-region
 	     outorg-beg-comment-marker outorg-beg-src-marker)
-	    (goto-char outorg-end-src-marker))
+	    (and (marker-position outorg-end-src-marker)
+		 (goto-char outorg-end-src-marker)))
 	  ;; reset markers
 	  (move-marker outorg-beg-src-marker nil)
 	  (move-marker outorg-end-src-marker nil)
