@@ -1,21 +1,23 @@
 ;;; outorg-test.el --- ERT suite for outorg.el
 
 ;; Author: Thorsten Jolitz <tjolitz AT gmail DOT com>
-;; Version: 1.0
+;; Version: 0.0
 ;; URL: https://github.com/tj64/outorg
 
 ;;;; MetaData
 ;;   :PROPERTIES:
 ;;   :copyright: Thorsten Jolitz
 ;;   :copyright-years: 2014+
-;;   :version:  1.0
+;;   :version:  0.9
 ;;   :licence:  GPL 2 or later (free software)
 ;;   :licence-url: http://www.gnu.org/licenses/
 ;;   :part-of-emacs: no
 ;;   :author: Thorsten Jolitz
 ;;   :author_email: tjolitz AT gmail DOT com
 ;;   :inspiration:  test-org-element.el
-;;   :keywords: emacs org-mode comment-editing
+;;   :keywords: emacs org-mode ert buffer
+;;   :git-repo: https://github.com/tj64/outorg
+;;   :git-clone: git://github.com/tj64/outorg.git
 ;;   :END:
 
 
@@ -67,7 +69,7 @@
     (outorg-copy-edits-and-exit)))
 
 
-(defun outorg-test-run-ert (org-cmd)
+(defun outorg-test-run-ert (org-cmd &optional arg)
   "Prepare and run ERT test.
 
 This command records the major-mode of current-buffer in global
@@ -79,7 +81,7 @@ of current buffer into a temporary *outorg-test-buffer* and sets its major-mode.
 After this preparation it calls ERT test `outorg-test-conversion'
 that makes use of the *outorg-test-buffer* and the global
 variables mentioned above."
-  (interactive "P\nCOrg Command: ")
+  (interactive "COrg Command: \nP")
   (let ((old-buf (current-buffer))
 	(maj-mode (outorg-get-buffer-mode)))
     ;; necessary (?) HACK
@@ -95,7 +97,8 @@ variables mentioned above."
 	(funcall maj-mode)
 	;; (call-interactively 'ert-run-tests-interactively)
 	(funcall 'ert-run-tests-interactively
-		 "outorg-test-conversion")))))
+		 "outorg-test-conversion")
+	))))
 
 ;;; Tests
 
@@ -128,11 +131,11 @@ the same state as before the test, i.e.
 
  - point should be in the same position
 
- - the mark should be in the same position
+ - the mark should be in the same position (or nil)
 
 These are actually the three criteria checked by the 'ert-buffer'
-library, and when one or more of the checks returns nil, the ert test
-fails.
+library, and when one or more of the checks returns nil, the ert
+test fails.
 
 This test is a one-size-fits-all test for outorg, since it
 allows, when called via command `outorg-test-run-ert', to execute
@@ -141,9 +144,7 @@ the changes later on, checking for any undesired permanent side
 effects of the conversion process per se."
   (let ((curr-buf-initial-state
 	 (with-current-buffer "*outorg-test-buffer*"
-	   ;; (deactivate-mark 'FORCE)
 	   (ert-Buf-from-buffer))))
-    ;; (cmd outorg-test-cmd))
     (should
      (ert-equal-buffer
       (outorg-test-cmd)
@@ -152,6 +153,6 @@ effects of the conversion process per se."
 
 ;;; Run hooks and provide
 
-(provide 'outorg-test')
+(provide 'outorg-test)
 
 ;;; outorg-test.el ends here
