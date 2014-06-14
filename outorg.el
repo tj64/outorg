@@ -1108,7 +1108,7 @@ block."
 	      (uncomment-region
 	       outorg-beg-comment-marker outorg-beg-src-marker)
 	      (and beg-src-pos end-src-pos
-		   (> end-src-pos beg-src-pos)
+		   (< beg-src-pos end-src-pos)
 		   (goto-char outorg-end-src-marker))))
 	  ;; reset markers
 	  (move-marker outorg-beg-src-marker nil)
