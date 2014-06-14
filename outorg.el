@@ -1092,19 +1092,24 @@ block."
 	  (when (< outorg-beg-src-marker outorg-end-src-marker)
 	    (outorg-wrap-source-in-block
 	     babel-lang example-block-p))
-	  ;; special case only comments and whitespace in buffer
-	  (when (and
-		 (eq (marker-position outorg-beg-comment-marker) 1)
-		 (eq (marker-position outorg-beg-src-marker) 1))
-	    (move-marker outorg-beg-src-marker (point-max)))
-	  ;; uncomment region
-	  (when (< outorg-beg-comment-marker
-		   outorg-beg-src-marker)
-	    (uncomment-region
-	     outorg-beg-comment-marker outorg-beg-src-marker)
-	    (and (marker-position outorg-end-src-marker)
-		 (> (marker-position outorg-end-src-marker) 1)
-		 (goto-char outorg-end-src-marker)))
+	  (let ((beg-comm-pos
+		 (marker-position outorg-beg-comment-marker))
+		(beg-src-pos
+		 (marker-position outorg-beg-src-marker))
+		(end-src-pos
+		 (marker-position outorg-end-src-marker)))
+	    ;; special case only comments and whitespace in buffer
+	    (when (and (eq beg-comm-pos 1)
+		       (eq beg-src-pos 1))
+	      (move-marker outorg-beg-src-marker (point-max)))
+	    ;; uncomment region
+	    (when (< outorg-beg-comment-marker
+		     outorg-beg-src-marker)
+	      (uncomment-region
+	       outorg-beg-comment-marker outorg-beg-src-marker)
+	      (and beg-src-pos end-src-pos
+		   (> end-src-pos beg-src-pos)
+		   (goto-char outorg-end-src-marker))))
 	  ;; reset markers
 	  (move-marker outorg-beg-src-marker nil)
 	  (move-marker outorg-end-src-marker nil)
