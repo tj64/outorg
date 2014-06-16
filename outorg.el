@@ -284,7 +284,11 @@ the start of the region.")
 
 (defvar outorg-beg-comment-marker (make-marker)
  "Outorg marker for tracking begin of comment.")
- 
+
+;; (defvar outorg-src-block-data ()
+;;  "Store .")
+
+
 ;;;; Hooks
 
 (defvar outorg-hook nil
@@ -1077,10 +1081,12 @@ block."
 			     (forward-comment -1000)
 			     (point)))
 	    (move-marker outorg-beg-src-marker
+			 ;; skip forward comments and whitespace
 			 (progn
 			   (forward-comment 1000)
 			   (point)))
 	    (move-marker outorg-end-src-marker
+			 ;; search next comment at bol
 			 (progn
 			   (while (and
 				   (< (point) (point-max))
@@ -1088,22 +1094,21 @@ block."
 				    (eq (comment-search-forward
 					 (point-max) t)
 					(point-at-bol)))))
-			   (if (eq (point) 1)
-			       (goto-char (point-max))
-			     (beginning-of-line)
-			     (point))
-			   (forward-comment -1000)
-			   (point))))
-	    ;; (move-marker outorg-end-src-marker
-	    ;; 		 (progn
-	    ;; 		   (if (eq (comment-search-forward
-	    ;; 			    (point-max) t)
-	    ;; 			   (point-at-bol))
-	    ;; 		       (beginning-of-line)
-	    ;; 		     (goto-char (point-max)))
-	    ;; 		   (forward-comment -1000)
-	    ;; 		   (point)))
-	    )
+			   ;; move point to beg of comment
+			   (beginning-of-line)
+			   ;; (if (eq (point) 1)
+			   ;;     ;; no more comments
+			   ;;     (goto-char (point-max))
+			   ;;   ;; ;; move point to beg of comment
+			   ;;   ;; (beginning-of-line)
+			   ;;   (point))
+			   (unless (bobp)
+			     ;; skip backward comments and whitespace
+			     (forward-comment -1000)
+			     ;; deal with trailing comment on line
+			     (unless (bobp)
+			       (end-of-line)))
+			     (point))))
 	  ;; wrap content in block
 	  (when (< outorg-beg-src-marker outorg-end-src-marker)
 	    (outorg-wrap-source-in-block
@@ -1130,6 +1135,17 @@ block."
 	  (move-marker outorg-beg-src-marker nil)
 	  (move-marker outorg-end-src-marker nil)
 	  (move-marker outorg-beg-comment-marker nil))))))
+
+	    ;; (move-marker outorg-end-src-marker
+	    ;; 		 (progn
+	    ;; 		   (if (eq (comment-search-forward
+	    ;; 			    (point-max) t)
+	    ;; 			   (point-at-bol))
+	    ;; 		       (beginning-of-line)
+	    ;; 		     (goto-char (point-max)))
+	    ;; 		   (forward-comment -1000)
+	    ;; 		   (point)))
+
 
 (defun outorg-indent-active-source-blocks (mode-name)
   "Indent active source-blocks after conversion to Org.
@@ -1174,82 +1190,384 @@ converting back from Org to source-code if customizable variable
                       (cadr (outorg-region-or-buffer-limits)))
                      (org-do-remove-indentation)))))))
 
+;; (defun outorg-convert-example-blocks-to-src-blocks ()
+;;   "Convert example blocks to src-blocks."
+;;   (org-with-wide-buffer
+;;    (goto-char (point-min))
+;;    (while (re-search-forward
+;; 	   "\\(^#\\+begin_\\)\\(example\\)"
+;; 	   nil 'NOERROR)
+;;      (replace-match "src example" nil nil nil 2))
+;;    (goto-char (point-min))
+;;    (while (re-search-forward
+;; 	   "\\(^#\\+end_\\)\\(example\\)"
+;; 	   nil 'NOERROR)
+;;      (replace-match "src" nil nil nil 2))))
+
+
 (defun outorg-convert-back-to-code ()
   "Convert edit-buffer content back to programming language syntax.
 Assume that edit-buffer major-mode has been set back to the
   programming-language major-mode of the associated code-buffer
   before this function is called."
-  (let* ((inside-code-or-example-block-p nil)
-         (comment-style "plain")
+  (let* ((comment-style "plain")
          (buffer-mode (outorg-get-buffer-mode))
          (in-org-babel-load-languages-p
-	  (outorg-in-babel-load-languages-p buffer-mode)))
-    (save-excursion
-      (goto-char (point-min))
-      (ignore-errors
-        (and
-         (looking-at outorg-export-template-regexp)
-         (replace-match "")))
-      (while (not (eobp))
-        (cond
-         ;; empty line (do nothing)
-         ((looking-at "^[[:space:]]*$"))
-         ;; begin code/example block
-         ((looking-at "^[ \t]*#\\+begin_?")
-          (if (or (and (not in-org-babel-load-languages-p)
-                       (looking-at "^[ \t]*#\\+begin_example"))
-                  (and in-org-babel-load-languages-p
-                       (looking-at
-                        (format "^[ \t]*#\\+begin_src %s"
-				(outorg-get-babel-name
-				 buffer-mode 'as-strg-p)))))
-              (progn
-                (kill-whole-line)
-                (forward-line -1)
-                (setq inside-code-or-example-block-p t))
-            (save-excursion
-              (insert "!!!")
-              (comment-region (point-at-bol) (point-at-eol))
-              (beginning-of-line)
-              (and (looking-at "\\(^.+\\)\\(!!![[:space:]]*#\\+\\)")
-                   (replace-match "#+" nil nil nil 2)))))
-         ;; end code/example block
-         ((looking-at "^[ \t]*#\\+end_?")
-          (if (or (and (not in-org-babel-load-languages-p)
-                       (looking-at "^[ \t]*#\\+end_example"))
-                  (and in-org-babel-load-languages-p
-                       inside-code-or-example-block-p
-                       (looking-at
-                        (format "^[ \t]*#\\+end_src"))))
-              (progn
-                (kill-whole-line)
-                (forward-line -1)
-                (setq inside-code-or-example-block-p nil))
-            (save-excursion
-              (insert "!!!")
-              (comment-region (point-at-bol) (point-at-eol))
-              (beginning-of-line)
-              (and (looking-at "\\(^.+\\)\\(!!![[:space:]]*#\\+\\)")
-                   (replace-match "#+" nil nil nil 2)))))
-         ;; line inside code/example block (do nothing)
-         (inside-code-or-example-block-p)
-         ;; not-empty line outside code/example block
-         (t
-          (if (and outorg-oldschool-elisp-headers-p
-                   (looking-at "^[*]+ "))
-              ;; deal with oldschool elisp headers (;;;+ )
-              (let* ((org-header-level
-                      (1- (length (match-string-no-properties 0))))
-                     (replacement-string
-                      (let ((strg ";"))
-                        (dotimes (i (1- org-header-level) strg)
-                          (setq strg (concat strg ";"))))))
-                (comment-region (point-at-bol) (point-at-eol))
-                (and
-                 (looking-at "\\(;;\\)\\( [*]+\\)\\( \\)")
-                 (replace-match replacement-string nil nil nil 2)))
-            (comment-region (point-at-bol) (point-at-eol)))))
-        (forward-line)))))
+	  (outorg-in-babel-load-languages-p buffer-mode))
+	 (rgxp 
+	  (if in-org-babel-load-languages-p
+	      (format "%s%s%s"
+		      "\\(?:#\\+begin_src[[:space:]]+"
+		      (regexp-quote
+		       (outorg-get-babel-name
+			buffer-mode 'AS-STRG-P))
+		      "[^\\000]*?\n#\\+end_src\\)")
+		      ;; "[^\\W]*?\n#\\+end_src\\)")
+	    (concat 
+	     "\\(?:#\\+begin_example"
+	     "[^\\000]*?\n#\\+end_example\\)")))
+	 ;; (beg-rgxp
+	 ;;  (if in-org-babel-load-languages-p
+	 ;;      (concat
+	 ;;       "^#\\+begin_src[[:space:]]+"
+	 ;;       (outorg-get-babel-name buffer-mode 'AS-STRG-P))
+	 ;;    "^#\\+begin_example"))
+	 ;; (end-rgxp "^#\\+end_")
+	 (first-block-p t))
+    ;; reset (left-over) marker
+    (move-marker outorg-beg-src-marker nil)
+    (move-marker outorg-end-src-marker nil)
+    ;; 1st run: outcomment text
+    (goto-char (point-min))
+    (while (re-search-forward rgxp nil 'NOERROR)
+      ;; special case 1st block
+      (if first-block-p
+	  (progn
+	    (move-marker outorg-beg-src-marker (match-beginning 0))
+	    (move-marker outorg-end-src-marker (match-end 0))
+	    (save-match-data
+	      (ignore-errors
+		(comment-region (point-min) (match-beginning 0))))
+	    (setq first-block-p nil))
+	;; default case
+        (let ((previous-beg-src
+	       (marker-position outorg-beg-src-marker))
+	      (previous-end-src
+	       (marker-position outorg-end-src-marker)))
+	  (move-marker outorg-beg-src-marker (match-beginning 0))
+	  (move-marker outorg-end-src-marker (match-end 0))
+	  (save-match-data
+	    (ignore-errors
+	      (comment-region previous-end-src
+			      (match-beginning 0))))
+	  (save-excursion
+	    (goto-char previous-end-src)
+	    (kill-whole-line)
+	    (goto-char previous-beg-src)
+	    (kill-whole-line)))))
+    ;; (re-search-forward end-rgxp nil 'NOERROR))))
+    ;; special case last block
+    (ignore-errors
+      (comment-region
+       (if first-block-p (point-min) outorg-end-src-marker)
+       (point-max)))
+    (unless first-block-p		; no src-block so far
+      (save-excursion
+	(goto-char outorg-end-src-marker)
+	(kill-whole-line)
+	(goto-char outorg-beg-src-marker)
+	(kill-whole-line))))
+  (move-marker outorg-beg-src-marker nil)
+  (move-marker outorg-end-src-marker nil))
+    ;; 2nd run: delete (active) block delimiters
+    ;; (goto-char (point-min))
+    ;; (while (re-search-forward beg-rgxp nil 'NOERROR)
+    ;;   (kill-whole-line)
+    ;;   (re-search-forward end-rgxp nil 'NOERROR)
+    ;;   (kill-whole-line))))
+
+;; (defun outorg-convert-back-to-code ()
+;;   "Convert edit-buffer content back to programming language syntax.
+;; Assume that edit-buffer major-mode has been set back to the
+;;   programming-language major-mode of the associated code-buffer
+;;   before this function is called."
+;;   (let* ((comment-style "plain")
+;;          (buffer-mode (outorg-get-buffer-mode))
+;;          (in-org-babel-load-languages-p
+;; 	  (outorg-in-babel-load-languages-p buffer-mode))
+;; 	 (beg-rgxp
+;; 	  (if in-org-babel-load-languages-p
+;; 	      (concat
+;; 	       "^#\\+begin_src[[:space:]]+"
+;; 	       (outorg-get-babel-name buffer-mode 'AS-STRG-P))
+;; 	    "^#\\+begin_example"))
+;; 	 (end-rgxp "^#\\+end_")
+;; 	 (first-block-p t)
+;; 	 previous-block-end)
+;;     ;; 1st run: outcomment text
+;;     (goto-char (point-min))
+;;     (while (re-search-forward beg-rgxp nil 'NOERROR)
+;;       ;; special case 1st block
+;;       (if first-block-p
+;; 	  (progn
+;; 	    (ignore-errors
+;; 	      (comment-region (point-min) (match-beginning 0)))
+;; 	    (setq first-block-p nil)
+;; 	    (setq previous-block-end
+;; 		  (progn
+;; 		    (re-search-forward end-rgxp nil 'NOERROR)
+;; 		    (point-at-eol))))
+;; 	;; default case
+;; 	(ignore-errors
+;; 	  (comment-region previous-block-end (match-beginning 0)))
+;; 	(setq previous-block-end
+;; 	      (re-search-forward end-rgxp nil 'NOERROR))))
+;;     ;; special case last block
+;;     (ignore-errors
+;;       (comment-region previous-block-end (point-max)))
+;;     ;; 2nd run: delete (active) block delimiters
+;;     (goto-char (point-min))
+;;     (while (re-search-forward beg-rgxp nil 'NOERROR)
+;;       (kill-whole-line)
+;;       (re-search-forward end-rgxp nil 'NOERROR)
+;;       (kill-whole-line))))
+
+  ;;   ;; ;; convert (active) example blocks to src blocks
+  ;;   ;; (unless in-org-babel-load-languages-p
+  ;;   ;;   (outorg-convert-example-blocks-to-src-blocks))
+  ;;   ;; reset (left-over) markers
+  ;;   (move-marker outorg-beg-src-marker nil)
+  ;;   (move-marker outorg-end-src-marker nil)
+  ;;   ;; (move-marker outorg-beg-comment-marker nil)
+  ;;   ;; map active blocks
+  ;;   (org-babel-map-src-blocks nil
+  ;;     (when (string= lang active-lang)
+  ;; 	(or dangling-block-p (setq dangling-block-p t))
+  ;; 	(message "beg this-block: %s\nend this-block: %s"
+  ;; 		 beg-block end-block)
+  ;; 	(if (marker-position outorg-end-src-marker)
+  ;; 	    ;; default case
+  ;; 	    (let ((old-beg (marker-position outorg-beg-src-marker))
+  ;; 		  (old-end (marker-position outorg-end-src-marker)))
+  ;; 	      (move-marker outorg-beg-src-marker beg-block)
+  ;; 	      (move-marker outorg-end-src-marker end-block)
+  ;; 	      (ignore-errors (comment-region old-end beg-block))
+  ;; 	      (save-excursion
+  ;; 		(goto-char old-end)
+  ;; 		(kill-whole-line)
+  ;; 		(goto-char old-beg)
+  ;; 		(kill-whole-line)))
+  ;; 	  ;; special case first block
+  ;; 	  (move-marker outorg-beg-src-marker beg-block)
+  ;; 	  (move-marker outorg-end-src-marker end-block)
+  ;; 	  (ignore-errors
+  ;; 	    (comment-region (point-min) beg-block)))))
+  ;;   ;; special case last block
+  ;;   (when dangling-block-p
+  ;;     (ignore-errors
+  ;; 	(comment-region outorg-end-src-marker (point-max)))
+  ;;     (save-excursion
+  ;; 	(goto-char outorg-end-src-marker)
+  ;; 	(kill-whole-line)
+  ;; 	(goto-char outorg-beg-src-marker)
+  ;; 	(kill-whole-line))))
+  ;; ;; reset markers
+  ;; (move-marker outorg-beg-src-marker nil)
+  ;; (move-marker outorg-end-src-marker nil))
+
+
+;; (defun outorg-convert-back-to-code ()
+;;   "Convert edit-buffer content back to programming language syntax.
+;; Assume that edit-buffer major-mode has been set back to the
+;;   programming-language major-mode of the associated code-buffer
+;;   before this function is called."
+;;   (let* ((comment-style "plain")
+;;          (buffer-mode (outorg-get-buffer-mode))
+;;          (in-org-babel-load-languages-p
+;; 	  (outorg-in-babel-load-languages-p buffer-mode))
+;; 	 (active-lang
+;; 	  (if in-org-babel-load-languages-p
+;; 	      (outorg-get-babel-name buffer-mode 'AS-STRG-P)
+;; 	    "example"))
+;; 	 dangling-block-p)
+;;     ;; convert (active) example blocks to src blocks
+;;     (unless in-org-babel-load-languages-p
+;;       (outorg-convert-example-blocks-to-src-blocks))
+;;     ;; reset (left-over) markers
+;;     (move-marker outorg-beg-src-marker nil)
+;;     (move-marker outorg-end-src-marker nil)
+;;     ;; (move-marker outorg-beg-comment-marker nil)
+;;     ;; map active blocks
+;;     (org-babel-map-src-blocks nil
+;;       (when (string= lang active-lang)
+;; 	(or dangling-block-p (setq dangling-block-p t))
+;; 	(message "beg this-block: %s\nend this-block: %s"
+;; 		 beg-block end-block)
+;; 	(if (marker-position outorg-end-src-marker)
+;; 	    ;; default case
+;; 	    (let ((old-beg (marker-position outorg-beg-src-marker))
+;; 		  (old-end (marker-position outorg-end-src-marker)))
+;; 	      (move-marker outorg-beg-src-marker beg-block)
+;; 	      (move-marker outorg-end-src-marker end-block)
+;; 	      (ignore-errors (comment-region old-end beg-block))
+;; 	      (save-excursion
+;; 		(goto-char old-end)
+;; 		(kill-whole-line)
+;; 		(goto-char old-beg)
+;; 		(kill-whole-line)))
+;; 	  ;; special case first block
+;; 	  (move-marker outorg-beg-src-marker beg-block)
+;; 	  (move-marker outorg-end-src-marker end-block)
+;; 	  (ignore-errors
+;; 	    (comment-region (point-min) beg-block)))))
+;;     ;; special case last block
+;;     (when dangling-block-p
+;;       (ignore-errors
+;; 	(comment-region outorg-end-src-marker (point-max)))
+;;       (save-excursion
+;; 	(goto-char outorg-end-src-marker)
+;; 	(kill-whole-line)
+;; 	(goto-char outorg-beg-src-marker)
+;; 	(kill-whole-line))))
+;;   ;; reset markers
+;;   (move-marker outorg-beg-src-marker nil)
+;;   (move-marker outorg-end-src-marker nil))
+
+	;;     (save-excursion	    
+	;;       (goto-char (plist-get last-block-vars :end))
+	;;       (kill-line 0) (kill-line)
+	;;       (setq last-block-vars
+	;; 	    (plist-put last-block-vars :end (point)))
+	;;       (goto-char (plist-get last-block-vars :beg))
+	;;       (kill-line) (kill-line)
+	;; (setq last-block-vars
+	;;       (plist-put last-block-vars :beg beg-block))
+	;; (setq last-block-vars
+	;;       (plist-put last-block-vars :end end-block))))))
+
+   
+;; (defun outorg-convert-back-to-code ()
+;;   "Convert edit-buffer content back to programming language syntax.
+;; Assume that edit-buffer major-mode has been set back to the
+;;   programming-language major-mode of the associated code-buffer
+;;   before this function is called."
+;;   (let* ((comment-style "plain")
+;;          (buffer-mode (outorg-get-buffer-mode))
+;;          (in-org-babel-load-languages-p
+;; 	  (outorg-in-babel-load-languages-p buffer-mode))
+;; 	 (active-lang
+;; 	  (if in-org-babel-load-languages-p
+;; 	      (outorg-get-babel-name buffer-mode 'AS-STRG-P)
+;; 	    "example"))
+;; 	 last-block-vars)
+;;     (unless in-org-babel-load-languages-p
+;;       (outorg-convert-example-blocks-to-src-blocks))
+;;     (org-babel-map-src-blocks nil
+;;       (when (string= lang active-lang)
+;; 	(message "beg this-block: %s\nend this-block: %s"
+;; 		 beg-block end-block)
+;; 	(if last-block-vars
+;; 	    (save-excursion	    
+;; 	      (goto-char (plist-get last-block-vars :end))
+;; 	      (kill-line 0) (kill-line)
+;; 	      (setq last-block-vars
+;; 		    (plist-put last-block-vars :end (point)))
+;; 	      (goto-char (plist-get last-block-vars :beg))
+;; 	      (kill-line) (kill-line)
+;; 	      (ignore-errors
+;; 		(comment-region
+;; 		 (plist-get last-block-vars :end) beg-block)))
+;; 	  (ignore-errors
+;; 	    (comment-region (point-min) beg-block)))
+;; 	(setq last-block-vars
+;; 	      (plist-put last-block-vars :beg beg-block))
+;; 	(setq last-block-vars
+;; 	      (plist-put last-block-vars :end end-block))))))
+  
+  
+    ;; 	(ignore-errors
+    ;; 	  (if (not (marker-position last-block-end))
+    ;; 	      (comment-region (point-min) beg-block))
+    ;; 	  (comment-region last-block-end beg-block))
+    ;; 	(move-marker last-block-end end-block)
+    ;; 	(goto-char end-block)
+    ;; 	(beginning-of-line)
+    ;; 	(kill-line)
+    ;; 	(goto-char beg-block)
+    ;; 	(kill-line)))
+    ;; (move-marker last-block-end nil)))
+	    
+  ;; (let* ((inside-code-or-example-block-p nil)
+  ;;        (comment-style "plain")
+  ;;        (buffer-mode (outorg-get-buffer-mode))
+  ;;        (in-org-babel-load-languages-p
+  ;; 	  (outorg-in-babel-load-languages-p buffer-mode)))
+  ;;   (save-excursion
+  ;;     (goto-char (point-min))
+  ;;     (ignore-errors
+  ;;       (and
+  ;;        (looking-at outorg-export-template-regexp)
+  ;;        (replace-match "")))
+  ;;     (while (not (eobp))
+  ;;       (cond
+  ;;        ;; empty line (do nothing)
+  ;;        ((looking-at "^[[:space:]]*$"))
+  ;;        ;; begin code/example block
+  ;;        ((looking-at "^[ \t]*#\\+begin_?")
+  ;;         (if (or (and (not in-org-babel-load-languages-p)
+  ;;                      (looking-at "^[ \t]*#\\+begin_example"))
+  ;;                 (and in-org-babel-load-languages-p
+  ;;                      (looking-at
+  ;;                       (format "^[ \t]*#\\+begin_src %s"
+  ;; 				(outorg-get-babel-name
+  ;; 				 buffer-mode 'as-strg-p)))))
+  ;;             (progn
+  ;;               (kill-whole-line)
+  ;;               (forward-line -1)
+  ;;               (setq inside-code-or-example-block-p t))
+  ;;           (save-excursion
+  ;;             (insert "!!!")
+  ;;             (comment-region (point-at-bol) (point-at-eol))
+  ;;             (beginning-of-line)
+  ;;             (and (looking-at "\\(^.+\\)\\(!!![[:space:]]*#\\+\\)")
+  ;;                  (replace-match "#+" nil nil nil 2)))))
+  ;;        ;; end code/example block
+  ;;        ((looking-at "^[ \t]*#\\+end_?")
+  ;;         (if (or (and (not in-org-babel-load-languages-p)
+  ;;                      (looking-at "^[ \t]*#\\+end_example"))
+  ;;                 (and in-org-babel-load-languages-p
+  ;;                      inside-code-or-example-block-p
+  ;;                      (looking-at
+  ;;                       (format "^[ \t]*#\\+end_src"))))
+  ;;             (progn
+  ;;               (kill-whole-line)
+  ;;               (forward-line -1)
+  ;;               (setq inside-code-or-example-block-p nil))
+  ;;           (save-excursion
+  ;;             (insert "!!!")
+  ;;             (comment-region (point-at-bol) (point-at-eol))
+  ;;             (beginning-of-line)
+  ;;             (and (looking-at "\\(^.+\\)\\(!!![[:space:]]*#\\+\\)")
+  ;;                  (replace-match "#+" nil nil nil 2)))))
+  ;;        ;; line inside code/example block (do nothing)
+  ;;        (inside-code-or-example-block-p)
+  ;;        ;; not-empty line outside code/example block
+  ;;        (t
+  ;;         (if (and outorg-oldschool-elisp-headers-p
+  ;;                  (looking-at "^[*]+ "))
+  ;;             ;; deal with oldschool elisp headers (;;;+ )
+  ;;             (let* ((org-header-level
+  ;;                     (1- (length (match-string-no-properties 0))))
+  ;;                    (replacement-string
+  ;;                     (let ((strg ";"))
+  ;;                       (dotimes (i (1- org-header-level) strg)
+  ;;                         (setq strg (concat strg ";"))))))
+  ;;               (comment-region (point-at-bol) (point-at-eol))
+  ;;               (and
+  ;;                (looking-at "\\(;;\\)\\( [*]+\\)\\( \\)")
+  ;;                (replace-match replacement-string nil nil nil 2)))
+  ;;           (comment-region (point-at-bol) (point-at-eol)))))
+  ;;       (forward-line)))))
 
 ;; (defun outorg-convert-back-to-code ()
 ;;   "Convert edit-buffer content back to programming language syntax.
@@ -1444,6 +1762,17 @@ With ARG, act conditional on the raw value of ARG:
   (outorg-save-markers outorg-tracked-markers)
   (outorg-copy-and-convert))
 
+;; (defun outorg-gather-src-block-data ()
+;;   "Gather beg/end data of active src-blocks in curr-buf.
+;; Store the data as alist with form
+
+;;  #+begin_src emacs-lisp
+;;    ((beg-block end-block) ... (beg-block end-block))
+;;  #+end_src
+
+;; in global variable `outorg-src-block-data'."
+  
+
 (defun outorg-copy-edits-and-exit ()
   "Replace code-buffer content with (converted) edit-buffer content and
   kill edit-buffer"
@@ -1464,6 +1793,18 @@ With ARG, act conditional on the raw value of ARG:
 	  (set-buffer-modified-p nil))
 	(kill-buffer
 	 (marker-buffer outorg-edit-buffer-marker))
+	(and outorg-code-buffer-read-only-p
+	     (setq inhibit-read-only nil))
+	;; (and (eq major-mode 'message-mode)
+	(and (derived-mode-p 'message-mode)
+	     (outorg-prepare-message-mode-buffer-for-sending))
+	(and (eq major-mode 'picolisp-mode)
+	     (save-excursion
+	       (save-match-data
+		 (goto-char (point-max))
+		 (re-search-backward
+		  (concat "(" (regexp-quote "********") ")")
+		  nil 'NOERROR))))
 	;; clean up global vars
 	(outorg-reset-global-vars))
     ;; edit-buffer modified
