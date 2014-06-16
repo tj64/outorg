@@ -561,7 +561,8 @@ of `outorg-temporary-directory'."
 
 ;; inspired by `article-remove-trailing-blank-lines' in `gnus-art.el'
 (defun outorg-remove-trailing-blank-lines ()
-  "Remove all trailing blank lines from buffer."
+  "Remove all trailing blank lines from buffer.
+Finally add one newline."
   (save-excursion
     (let ((inhibit-read-only t))
       (goto-char (point-max))
@@ -573,7 +574,6 @@ of `outorg-temporary-directory'."
 	   (forward-line -1))
 	 (forward-line 1)
 	 (point))))))
-
 
 ;;;;; Save and Restore Markers
 
@@ -1271,7 +1271,9 @@ Assume that edit-buffer major-mode has been set back to the
 		(let ((strg ";"))
 		  (dotimes (i (1- org-header-level) strg)
 		    (setq strg (concat strg ";"))))))
-	   (replace-match replacement-string nil nil nil 2))))))
+	   (replace-match replacement-string nil nil nil 2)))))
+  ;; finally remove trailing empty lines
+  (outorg-remove-trailing-blank-lines))
 
 (defun outorg-replace-code-with-edits ()
   "Replace code-buffer contents with edits."
