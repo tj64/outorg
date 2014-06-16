@@ -1221,19 +1221,13 @@ Assume that edit-buffer major-mode has been set back to the
 		      (regexp-quote
 		       (outorg-get-babel-name
 			buffer-mode 'AS-STRG-P))
-		      "[^\\000]*?\n#\\+end_src\\)")
-		      ;; "[^\\W]*?\n#\\+end_src\\)")
+		      "[^^@]*?\n#\\+end_src\\)")
+		      ;; "[^\\000]*?\n#\\+end_src\\)")
 	    (concat 
 	     "\\(?:#\\+begin_example"
 	     "[^\\000]*?\n#\\+end_example\\)")))
-	 ;; (beg-rgxp
-	 ;;  (if in-org-babel-load-languages-p
-	 ;;      (concat
-	 ;;       "^#\\+begin_src[[:space:]]+"
-	 ;;       (outorg-get-babel-name buffer-mode 'AS-STRG-P))
-	 ;;    "^#\\+begin_example"))
-	 ;; (end-rgxp "^#\\+end_")
 	 (first-block-p t))
+    ;; 1st run: outcomment text, delete (active) block delimiters
     ;; reset (left-over) marker
     (move-marker outorg-beg-src-marker nil)
     (move-marker outorg-end-src-marker nil)
@@ -1265,7 +1259,6 @@ Assume that edit-buffer major-mode has been set back to the
 	    (kill-whole-line)
 	    (goto-char previous-beg-src)
 	    (kill-whole-line)))))
-    ;; (re-search-forward end-rgxp nil 'NOERROR))))
     ;; special case last block
     (ignore-errors
       (comment-region
@@ -1278,7 +1271,23 @@ Assume that edit-buffer major-mode has been set back to the
 	(goto-char outorg-beg-src-marker)
 	(kill-whole-line))))
   (move-marker outorg-beg-src-marker nil)
-  (move-marker outorg-end-src-marker nil))
+  (move-marker outorg-end-src-marker nil)
+  ;; 2nd (optional) run: convert elisp headers to oldschool
+  (when outorg-oldschool-elisp-headers-p
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward
+	      "\\(^;;\\)\\( [*]+\\)\\( \\)"
+	      nil 'NOERROR)
+	(let* ((org-header-level
+		(- (length (match-string-no-properties 0)) 4))
+	       (replacement-string
+		(let ((strg ";"))
+		  (dotimes (i (1- org-header-level) strg)
+		    (setq strg (concat strg ";"))))))
+	   (replace-match replacement-string nil nil nil 2))))))
+
+
     ;; 2nd run: delete (active) block delimiters
     ;; (goto-char (point-min))
     ;; (while (re-search-forward beg-rgxp nil 'NOERROR)
