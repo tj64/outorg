@@ -1207,7 +1207,7 @@ Assume that edit-buffer major-mode has been set back to the
 		      (regexp-quote
 		       (outorg-get-babel-name
 			buffer-mode 'AS-STRG-P))
-		      "[^^@]*?\n#\\+end_src\\)")
+		      "[^ ]*?\n#\\+end_src\\)")
 		      ;; "[^\\000]*?\n#\\+end_src\\)")
 	    (concat 
 	     "\\(?:#\\+begin_example"

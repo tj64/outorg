@@ -46,18 +46,35 @@
 ;;;; Vars
 
 (defvar ert-buffer-report-insert-buffer-strings-p nil)
+(defvar ert-buffer-report-ignore-return-values-p t)
 
 ;;; Functions
 
 ;;;; Helper Function
 
-(defun tj/ert-buffer-report-toggle-insert-buffer-strings ()
+(defun ert-buffer-report-toggle-insert-buffer-strings ()
+  "Toggles the value of a boolean var.
+If `ert-buffer-report-insert-buffer-strings-p' is non-nil, the
+buffer-strings of the test-buffer before and after the test are
+included in the test-report."
   (interactive)
   (if ert-buffer-report-insert-buffer-strings-p
       (setq ert-buffer-report-insert-buffer-strings-p nil)
     (setq ert-buffer-report-insert-buffer-strings-p t))
-  (message "ERT-report insert buffer strings is: %s"
+  (message "ERT-report: insert buffer strings is %s"
 	   ert-buffer-report-insert-buffer-strings-p))
+
+(defun ert-buffer-report-toggle-ignore-return-values ()
+  "Toggles the value of a boolean var.
+If `ert-buffer-report-ignore-return-values-p' is non-nil, the
+expected and actual return values of the test are included in the
+test-report."
+  (interactive)
+  (if ert-buffer-report-ignore-return-values-p
+      (setq ert-buffer-report-ignore-return-values-p nil)
+    (setq ert-buffer-report-ignore-return-values-p t))
+  (message "ERT-report: ignore return values is %s"
+	   ert-buffer-report-ignore-return-values-p))
 
 ;;;; Overwritten Funtion
 
@@ -106,9 +123,9 @@ IGNORE-RETURN, EXP-RETURN are described in `ert--equal-buffer'."
 	(insert "ERT Test Report ")
 	(org-insert-time-stamp nil t)
 	(org-end-of-meta-data-and-drawers)
-	(org-insert-heading '(4))
 	;; 2nd Level **
-	(insert "Point, Mark and Content Lenght")
+	(org-insert-heading '(4))
+	(insert "Point, Mark, Content Lenght and Return Value")
 	(org-demote-subtree)
 	(org-end-of-meta-data-and-drawers)
 	(newline)
@@ -117,16 +134,45 @@ IGNORE-RETURN, EXP-RETURN are described in `ert--equal-buffer'."
 	  (concat
 	   " - Point position :: %s -> %s\n"
 	   " - Mark position :: %s -> %s\n"
-	   " - Content length :: %d -> %d\n")
+	   " - Content length :: %d -> %d\n"
+	   " - Return value :: %s\n")
 	  (ert-Buf-point buf) (ert-Buf-point act-buf)
 	  (ert-Buf-mark buf) (ert-Buf-mark act-buf)
 	  (length (ert-Buf-content buf))
-	  (length (ert-Buf-content act-buf))))
+	  (length (ert-Buf-content act-buf))
+	  (cond
+	   (ignore-return "ignored")
+	   ((equal act-return exp-return)
+	    "expected == actual")
+	   ((not (equal act-return exp-return))
+	    "expected != actual")
+	   (t (error "This should not happen")))))
 	(newline)
 	;; 2nd Level **
- 	(org-insert-heading '(4))
+	(org-insert-heading '(4))
+	(insert "Return Value")
+	(org-end-of-meta-data-and-drawers)
+	;; 3rd Level ***
+	(org-insert-heading '(4))
+	(insert "Expected Return Value")
+	(org-demote-subtree)
+	(org-end-of-meta-data-and-drawers)
+	(newline)
+	(insert
+	 (if ignore-return "   [ignored]" exp-return))
+	(newline 2)
+	;; 3rd Level ***
+	(org-insert-heading '(4))
+	(insert "Actual Return Value")
+	(org-end-of-meta-data-and-drawers)
+	(insert
+	 (if ignore-return "   [ignored]" act-return))
+	(newline)
+	;; 2nd Level **
+	(org-insert-heading '(4))
 	(insert "Content DIFF")
 	(org-end-of-meta-data-and-drawers)
+	(newline)
 	(if (org-string-nw-p diff-strg)
 	    (insert
 	     (format
@@ -145,7 +191,7 @@ IGNORE-RETURN, EXP-RETURN are described in `ert--equal-buffer'."
 	(org-end-of-meta-data-and-drawers)
 	(newline)
 	(if (not ert-buffer-report-insert-buffer-strings-p)
-	    (insert "   [buffer-string omitted]")
+	    (insert "   [omitted]")
 	  (insert "#+begin_quote\n\n")
 	  (insert (ert-Buf-string buf))
 	  (insert "\n#+end_quote\n"))
@@ -155,7 +201,7 @@ IGNORE-RETURN, EXP-RETURN are described in `ert--equal-buffer'."
 	(insert "Buffer String AFTER")
 	(org-end-of-meta-data-and-drawers)
 	(if (not ert-buffer-report-insert-buffer-strings-p)
-	    (insert "   [buffer-string omitted]")
+	    (insert "   [omitted]")
 	  (insert "#+begin_quote\n\n")
 	  (insert (ert-Buf-string act-buf))
 	  (insert "\n#+end_quote\n"))
