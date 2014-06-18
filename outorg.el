@@ -1221,7 +1221,7 @@ Assume that edit-buffer major-mode has been set back to the
 	 (rgxp 
 	  (if in-org-babel-load-languages-p
 	      (format "%s%s%s"
-		      "\\(?:#\\+begin_src[[:space:]]+"
+		      "\\(?:^#\\+begin_src[[:space:]]+"
 		      (regexp-quote
 		       (outorg-get-babel-name
 			buffer-mode 'AS-STRG-P))
