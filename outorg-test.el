@@ -150,10 +150,10 @@ above."
      (list (read-command "Org Command: "))))
   (let ((old-buf (current-buffer))
 	(maj-mode (outorg-get-buffer-mode)))
-	;; (ret-p (or RETURN-P outorg-test-with-return-p))
-	;; (exp-p (or EXPLAIN-P outorg-test-with-explain-p)
-	;; (use-pref-arg-p (or USE-PREFIX-ARG-P
-	;; 		    outorg-test-with-return-p))))
+    ;; (ret-p (or RETURN-P outorg-test-with-return-p))
+    ;; (exp-p (or EXPLAIN-P outorg-test-with-explain-p)
+    ;; (use-pref-arg-p (or USE-PREFIX-ARG-P
+    ;; 		    outorg-test-with-return-p))))
     ;; necessary (?) HACK
     (setq outorg-test-saved-org-cmd org-cmd)
     (setq outorg-test-saved-major-mode maj-mode)
@@ -167,17 +167,25 @@ above."
 	(insert-buffer-substring old-buf)
 	(funcall maj-mode)
 	;; (call-interactively 'ert-run-tests-interactively)
-	(funcall
-	 'ert-run-tests-interactively
-	 (cond
-	  ((and RETURN-P EXPLAIN-P)
-	   "outorg-test-conversion-with-equal-return-explain")
-	  (RETURN-P
-	   "outorg-test-conversion-with-equal-return")
-	  (EXPLAIN-P
-	   "outorg-test-conversion-with-equal-explain")
-	  (t
+	(cond
+	 ((and (org-string-nw-p RETURN-P)
+	       (org-string-nw-p EXPLAIN-P))
+	  (funcall
+	   'ert-run-test ;s-interactively
+	   "outorg-test-conversion-with-equal-return-explain"))
+	 ((org-string-nw-p RETURN-P)
+	  (funcall
+	   'ert-run-test ;s-interactively
+	   "outorg-test-conversion-with-equal-return"))
+	 ((org-string-nw-p EXPLAIN-P)
+	  (funcall
+	   'ert-run-test ;s-interactively
+	   "outorg-test-conversion-with-equal-explain"))
+	 (t
+	  (funcall
+	   'ert-run-tests-interactively
 	   "outorg-test-conversion-with-equal")))))))
+
 
 ;;; Tests
 
@@ -230,49 +238,48 @@ effects of the conversion process per se."
       curr-buf-initial-state
       t))))
 
+;; (ert-deftest outorg-test-conversion-with-equal-return ()
+;;   "Test outorg conversion to and from Org.
 
-(ert-deftest outorg-test-conversion-with-equal-return ()
-  "Test outorg conversion to and from Org.
+;; This test takes return values into account. See docstring of
+;; `outorg-test-conversion-with-equal' for more info."
+;;   (let ((curr-buf-initial-state
+;; 	 (with-current-buffer "*outorg-test-buffer*"
+;; 	   (ert-Buf-from-buffer))))
+;;     (should
+;;      (ert-equal-buffer-return
+;;       (outorg-test-cmd)
+;;       curr-buf-initial-state
+;;       t nil))))
 
-This test takes return values into account. See docstring of
-`outorg-test-conversion-with-equal' for more info."
-  (let ((curr-buf-initial-state
-	 (with-current-buffer "*outorg-test-buffer*"
-	   (ert-Buf-from-buffer))))
-    (should
-     (ert-equal-buffer-return
-      (outorg-test-cmd)
-      curr-buf-initial-state
-      t nil))))
+;; (ert-deftest outorg-test-conversion-with-equal-explain ()
+;;   "Test outorg conversion to and from Org.
 
-(ert-deftest outorg-test-conversion-with-equal-explain ()
-  "Test outorg conversion to and from Org.
+;; This test explains results. See docstring of
+;; `outorg-test-conversion-with-equal' for more info."
+;;   (let ((curr-buf-initial-state
+;; 	 (with-current-buffer "*outorg-test-buffer*"
+;; 	   (ert-Buf-from-buffer))))
+;;     (should
+;;      (ert-equal-buffer-explain
+;;       (outorg-test-cmd)
+;;       curr-buf-initial-state
+;;       t))))
 
-This test explains results. See docstring of
-`outorg-test-conversion-with-equal' for more info."
-  (let ((curr-buf-initial-state
-	 (with-current-buffer "*outorg-test-buffer*"
-	   (ert-Buf-from-buffer))))
-    (should
-     (ert-equal-buffer-explain
-      (outorg-test-cmd)
-      curr-buf-initial-state
-      t))))
+;; (ert-deftest outorg-test-conversion-with-equal-return-explain ()
+;;   "Test outorg conversion to and from Org.
 
-(ert-deftest outorg-test-conversion-with-equal-return-explain ()
-  "Test outorg conversion to and from Org.
-
-This test takes return values into account and explains
-results. See docstring of `outorg-test-conversion-with-equal' for
-more info."
-  (let ((curr-buf-initial-state
-	 (with-current-buffer "*outorg-test-buffer*"
-	   (ert-Buf-from-buffer))))
-    (should
-     (ert-equal-buffer-return-explain
-      (outorg-test-cmd)
-      curr-buf-initial-state
-      t nil))))
+;; This test takes return values into account and explains
+;; results. See docstring of `outorg-test-conversion-with-equal' for
+;; more info."
+;;   (let ((curr-buf-initial-state
+;; 	 (with-current-buffer "*outorg-test-buffer*"
+;; 	   (ert-Buf-from-buffer))))
+;;     (should
+;;      (ert-equal-buffer-return-explain
+;;       (outorg-test-cmd)
+;;       curr-buf-initial-state
+;;       t nil))))
 
 
 ;;; Run hooks and provide

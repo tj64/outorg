@@ -1128,9 +1128,14 @@ block."
 		     outorg-beg-src-marker)
 	      (uncomment-region
 	       outorg-beg-comment-marker outorg-beg-src-marker)
+	      ;; goto end of src
 	      (and beg-src-pos end-src-pos
-		   (< beg-src-pos end-src-pos)
-		   (goto-char outorg-end-src-marker))))
+		   (cond
+		    ((< beg-src-pos end-src-pos)
+		     (goto-char outorg-end-src-marker))
+		    ;; 
+		    ((eq outorg-beg-src-marker (point-max))
+		     (goto-char outorg-beg-src-marker))))))
 	  ;; reset markers
 	  (move-marker outorg-beg-src-marker nil)
 	  (move-marker outorg-end-src-marker nil)
@@ -1242,9 +1247,12 @@ Assume that edit-buffer major-mode has been set back to the
 			      (match-beginning 0))))
 	  (save-excursion
 	    (goto-char previous-end-src)
-	    (kill-whole-line)
+	    (delete-region (1- (point-at-bol)) (point-at-eol))
+	    ;; (kill-whole-line)
 	    (goto-char previous-beg-src)
-	    (kill-whole-line)))))
+	    (delete-region (1- (point-at-bol)) (point-at-eol))
+	    ;; (kill-whole-line)
+	    ))))
     ;; special case last block
     (ignore-errors
       (comment-region
@@ -1253,9 +1261,12 @@ Assume that edit-buffer major-mode has been set back to the
     (unless first-block-p		; no src-block so far
       (save-excursion
 	(goto-char outorg-end-src-marker)
-	(kill-whole-line)
+	(delete-region (1- (point-at-bol)) (point-at-eol))
+	;; (kill-whole-line)
 	(goto-char outorg-beg-src-marker)
-	(kill-whole-line))))
+	(delete-region (1- (point-at-bol)) (point-at-eol))
+	;; (kill-whole-line)
+	)))
   (move-marker outorg-beg-src-marker nil)
   (move-marker outorg-end-src-marker nil)
   ;; 2nd (optional) run: convert elisp headers to oldschool
