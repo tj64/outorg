@@ -987,7 +987,7 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
     (goto-char
      (if outorg-edit-whole-buffer-p
          (marker-position outorg-code-buffer-point-marker)
-       ;; FIXME: use saved and restored markers instead
+       ;; FIXME=> use saved and restored markers instead
        (1+ (- (marker-position outorg-code-buffer-point-marker)
               (marker-position
 	       outorg-code-buffer-beg-of-subtree-marker)))))
