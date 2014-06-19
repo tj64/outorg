@@ -987,6 +987,7 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
     (goto-char
      (if outorg-edit-whole-buffer-p
          (marker-position outorg-code-buffer-point-marker)
+       ;; FIXME: use saved and restored markers instead
        (1+ (- (marker-position outorg-code-buffer-point-marker)
               (marker-position
 	       outorg-code-buffer-beg-of-subtree-marker)))))
@@ -1218,7 +1219,7 @@ converting back from Org to source-code if customizable variable
 Assume that edit-buffer major-mode has been set back to the
   programming-language major-mode of the associated code-buffer
   before this function is called."
-  (let* ((comment-style "multi-line")	;was "plain"
+  (let* ((comment-style "plain")	; "multi-line"?
          (buffer-mode (outorg-get-buffer-mode))
          (in-org-babel-load-languages-p
 	  (outorg-in-babel-load-languages-p buffer-mode))
@@ -1229,8 +1230,7 @@ Assume that edit-buffer major-mode has been set back to the
 		      (regexp-quote
 		       (outorg-get-babel-name
 			buffer-mode 'AS-STRG-P))
-		      "[^ ]*?\n#\\+end_src\\)")
-		      ;; "[^\\000]*?\n#\\+end_src\\)")
+		      "[^ ]*?\n#\\+end_src\\)") ; NUL char
 	    (concat 
 	     "\\(?:#\\+begin_example"
 	     "[^\\000]*?\n#\\+end_example\\)")))
@@ -1265,11 +1265,8 @@ Assume that edit-buffer major-mode has been set back to the
 	  (save-excursion
 	    (goto-char previous-end-src)
 	    (delete-region (1- (point-at-bol)) (point-at-eol))
-	    ;; (kill-whole-line)
 	    (goto-char previous-beg-src)
-	    (delete-region (1- (point-at-bol)) (point-at-eol))
-	    ;; (kill-whole-line)
-	    ))))
+	    (delete-region (1- (point-at-bol)) (point-at-eol))))))
     ;; special case last block
     (ignore-errors
       (comment-region
@@ -1279,11 +1276,8 @@ Assume that edit-buffer major-mode has been set back to the
       (save-excursion
 	(goto-char outorg-pt-C-marker)
 	(delete-region (1- (point-at-bol)) (point-at-eol))
-	;; (kill-whole-line)
 	(goto-char outorg-pt-B-marker)
-	(delete-region (1- (point-at-bol)) (point-at-eol))
-	;; (kill-whole-line)
-	)))
+	(delete-region (1- (point-at-bol)) (point-at-eol)))))
   (move-marker outorg-pt-B-marker nil)
   (move-marker outorg-pt-C-marker nil)
   ;; 2nd (optional) run: convert elisp headers to oldschool
@@ -1299,9 +1293,9 @@ Assume that edit-buffer major-mode has been set back to the
 		(let ((strg ";"))
 		  (dotimes (i (1- org-header-level) strg)
 		    (setq strg (concat strg ";"))))))
-	   (replace-match replacement-string nil nil nil 2)))))
-  ;; finally remove trailing empty lines
-  (outorg-remove-trailing-blank-lines))
+	   (replace-match replacement-string nil nil nil 2))))))
+  ;; ;; finally remove trailing empty lines REALLY?
+  ;; (outorg-remove-trailing-blank-lines))
 
 (defun outorg-replace-code-with-edits ()
   "Replace code-buffer contents with edits."

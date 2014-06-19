@@ -80,7 +80,11 @@
   (let ((pref-arg '(4))
 	saved-undo-tree)
     ;; set major mode in buffer copy
-    (funcall outorg-test-saved-major-mode)
+    (if (eq outorg-test-saved-major-mode 'ess-mode)
+	;; special case R-mode
+	(funcall 'R-mode)
+      (funcall outorg-test-saved-major-mode))
+    ;; (funcall outorg-test-saved-major-mode)
     ;; 1ST ROUND: convert buffer from source to org
     (outorg-edit-as-org
      outorg-test-saved-prefix-arg)
@@ -165,7 +169,11 @@ above."
 	  (get-buffer-create "*outorg-test-buffer*")
 	(erase-buffer)
 	(insert-buffer-substring old-buf)
-	(funcall maj-mode)
+	(if (eq maj-mode 'ess-mode)
+	    ;; special case R-mode
+	    (funcall 'R-mode)
+	  (funcall outorg-test-saved-major-mode))
+	;; (funcall maj-mode)
 	;; (call-interactively 'ert-run-tests-interactively)
 	(cond
 	 ((and (org-string-nw-p RETURN-P)
