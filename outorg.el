@@ -1091,8 +1091,11 @@ block."
 				   (point-max) t)))))
 	(goto-char outorg-pt-A-marker)
 	;; comment does not start at BOL -> skip
-	(if (not (eq (marker-position outorg-pt-A-marker)
-		     (point-at-bol)))
+	;; looking at src-block delimiter -> skip
+	(if (or (not (eq (marker-position outorg-pt-A-marker)
+			 (point-at-bol)))
+		(looking-at "^#\\+begin_")
+		(looking-at "^#\\+end_"))
 	    (forward-line)
 	  ;; comments starts at BOL -> convert
 	  (if (marker-position outorg-pt-B-marker)
@@ -1133,11 +1136,11 @@ block."
 	    (outorg-wrap-source-in-block
 	     babel-lang example-block-p))
 	  ;; remember marker positions
-	  (let ((pt-A-pos
+	  (let ((pt-A-pos		; beg-of-comment
 		 (marker-position outorg-pt-A-marker))
-		(pt-B-pos
+		(pt-B-pos		; beg-of-code
 		 (marker-position outorg-pt-B-marker))
-		(pt-C-pos
+		(pt-C-pos		; end-of-code
 		 (marker-position outorg-pt-C-marker)))
 	    ;; special case only comments and whitespace in buffer
 	    (when (and (eq pt-A-pos 1)
@@ -1154,7 +1157,8 @@ block."
 		   (cond
 		    ;; special case only comments and whitespace in
 		    ;; buffer -> finish loop
-		    ((eq outorg-pt-B-marker (point-max))
+		    ((eq (marker-position outorg-pt-B-marker)
+			 (point-max))
 		     (goto-char outorg-pt-B-marker))
 		    ;; loop until C is at EOB
 		    ((< pt-B-pos pt-C-pos)
@@ -1214,7 +1218,7 @@ converting back from Org to source-code if customizable variable
 Assume that edit-buffer major-mode has been set back to the
   programming-language major-mode of the associated code-buffer
   before this function is called."
-  (let* ((comment-style "plain")
+  (let* ((comment-style "multi-line")	;was "plain"
          (buffer-mode (outorg-get-buffer-mode))
          (in-org-babel-load-languages-p
 	  (outorg-in-babel-load-languages-p buffer-mode))
