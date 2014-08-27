@@ -23,92 +23,136 @@
 ;;;; Commentary
 ;;;;; About outorg
 
-;; [NOTE: For the sake of adding this library to MELPA, headlines
-;; had to be converted back from 'Org-mode style' to 'oldschool',
-;; and a few extra lines of required information had to be added on
-;; top of the MetaData section - just to comply with the required
-;; file formatting. All outshine, outorg and navi-mode functionality
-;; still works with this file. See my
-;; [[https://github.com/tj64/iorg][iOrg]] repository for examples of
-;; Emacs-Lisp and PicoLisp files structured 'the outshine way'.]
+;; Outorg is for editing comment-sections of source-code files in
+;; temporary Org-mode buffers. It turns conventional
+;; literate-programming upside-down in that the default mode is the
+;; programming-mode, and special action has to be taken to switch to the
+;; text-mode (i.e. Org-mode). 
 
-;; `outorg' is like "reverse Org-Babel": editing of comment-sections
-;; from source-code files in temporary Org-mode buffers instead of
-;; editing of Org-mode source-blocks in temporary source-code
-;; buffers.
+;; Outorg depends on Outshine, i.e. outline-minor-mode with outshine
+;; extensions activated. An outshine buffer is structured like an
+;; org-mode buffer, only with outcommented headlines. While in
+;; Org-mode text is text and source-code is 'hidden' inside of special
+;; src-blocks, in an outshine buffer source-code is source-code and
+;; text is 'hidden' as comments.
 
-;; It should be used together with `outline-minor-mode' and
-;; `outshine.el'.  Keep in mind, that `outorg' only works with
-;; outshine-style headlines like those produced by calling
-;; `comment-region' on Org-mode style headlines in a source-code
-;; buffer. Take this file as an example for suitable outline
-;; headlines in an Emacs Lisp buffer. In other major-modes, the
-;; `comment-start' character ';' of Emacs Lisp would be replaced by
-;; that of the respective major-mode, e.g. '#' in PicoLisp mode or
-;; '%' in LaTeX mode.
+;; Thus org-mode and programming-mode are just two different views on
+;; the outshine-style structured source-file, and outorg is the tool
+;; to switch between these two modes. When switching from a
+;; programming-mode to org-mode, the comments are converted to text
+;; and the source-code is put into src-blocks. When switching back
+;; from org-mode to the programming-mode, the process is reversed -
+;; the text is outcommented again and the src-blocks that enclose the
+;; source-code are removed.
 
-;; `outorgs' main command is accessible via two different
-;; keybindings
+;; When the code is more important than the text, i.e. when the task
+;; is rather 'literate PROGRAMMING' than 'LITERATE programming', it is
+;; often more convenient to work in a programming-mode and switch to
+;; org-mode once in a while than vice-versa. Outorg is really fast,
+;; even big files with 10k lines are converted in a second or so, and
+;; the user decides if he wants to convert just the current subtree
+;; (done instantly) or the whole buffer. Since text needs no session
+;; handling or variable passing or other special treatment, the outorg
+;; approach is much simpler than the Org-Babel approach. However, the
+;; full power of Org-Babel is available once the *outorg-edit-buffer*
+;; has popped up.
 
-;;  - with outline-minor-mode-prefix 'C-c'
-    
+;;;;; Usage
+
+;; Outorg (like outshine) assumes that you set
+;; `outline-minor-mode-prefix' in your init-file to 'M-#':
+
+;; #+BEGIN_EXAMPLE 
+;; ;; must be set before outline is loaded
+;; (defvar outline-minor-mode-prefix "\M-#")
+;; #+END_EXAMPLE
+
+;; Outorg's main command is 
+
 ;; #+begin_example
-;;  C-c ' (outorg-edit-as-org)
+;;   M-# # (or M-x outorg-edit-as-org)
 ;; #+end_example
-  
-;;  - with outline-minor-mode-prefix 'M-#'
+
+;; to be used in source-code buffers where `outline-minor-mode' is
+;; activated with `outshine' extensions. The Org-mode edit-buffer popped
+;; up by this command is called *outorg-edit-buffer* and has
+;; `outorg-edit-minor-mode' activated, a minor-mode with only 2 commands:
 
 ;; #+begin_example
-;;  M-# M-# (outorg-edit-as-org)
-;; #+end_example
-
-;; used in source-code buffers where `outline-minor-mode' is
-;; activated with `outshine' extensions. The Org-mode edit-buffer
-;; popped up by this command has `outorg-edit-minor-mode' activated,
-;; a minor-mode with only 2 commands:
-
-;; #+begin_example
-;;    M-# (outorg-copy-edits-and-exit)
-;;    C-x C-s (outorg-save-edits-to-tmp-file)
+;;   M-# (outorg-copy-edits-and-exit)
+;;   C-x C-s (outorg-save-edits-to-tmp-file)
 ;; #+end_example
 
 ;; If you want to insert Org-mode source-code or example blocks in
-;; comment-sections, simply outcomment them in the outorg-edit
-;; buffer before calling `outorg-copy-edits-and-exit'.
+;; comment-sections, i.e. you don't want outorg to remove the
+;; enclosing blocks, simply outcomment them in the outorg-edit buffer
+;; before calling `outorg-copy-edits-and-exit'.
+
+;; Note that outorg only treats 'active' src-blocks in a special way -
+;; the blocks whose Babel language is equal to the major-mode of the
+;; associated programming-mode buffer. All other (src-) blocks are
+;; treated like normal text.
+
+;; Note further that outorg uses example-blocks as 'fallback' when it
+;; cannot find the major-mode of the programming-mode buffer in the
+;; `org-babel-load-languages'. In this case you should not use
+;; example-blocks for other tasks, since they will be removed when
+;; exiting the *outorg-edit-buffer*, use e.g. quote-blocks or
+;; verse-blocks instead.
 
 ;;;;; Installation
 
-;; Insert
+;; You can get outorg.el either from Github (see section MetaData) or
+;; via MELPA. It depends on outshine.el, so you have to install and
+;; configu re outshine first to make outorg work.
+
+;; Installation is easy, simply insert
 
 ;; #+begin_example
 ;;  (require 'outorg)
 ;; #+end_example
 
-;; in your .emacs. Since outshine.el has a soft dependency on outorg
-;; and navi-mode.el has a strong dependency on outshine (and a soft
-;; dependency on outorg), it may be sufficient to just require
-;; navi-mode in case you use all three libraries (as long as Emacs
-;; can find all of them).
+;; in your init file. When you use navi-mode.el too, the third Outshine
+;; library, it suffices to (require 'navi), since it requires the other
+;; two libraries. 
 
 ;;;;; Bugs and Shortcomings
 
-;; `outorg' is line-based, it only works with 'one-line' comments,
-;; i.e. with comment-sections like those produced by
-;; `comment-region' (a command that comments or uncomments each line
-;; in the region). Those special multi-line comments found in many
-;; programming languages are not recognized and lead to undefined
-;; behaviour.
+;; Outorg started out purely line-based, it only worked with
+;; 'one-line' comments, i.e. with comment-sections like those produced
+;; by `comment-region' (a command that comments or uncomments each
+;; line in the region). It was enhanced later on to recognize comment
+;; regions too, i.e. those special multi-line comments found in many
+;; programming languages. But using outorg on such multi-line comments
+;; will probably change their syntax back to 'single-line', whenever
+;; `comment-region' uses this style.
 
-;; There is no comprehensive set of ERT tests defined for outorg
-;; yet, which would be important given that outorg transforms often
-;; important user files back and forth between two representations.
+;;;;; Tests
+
+;; A special kind of test has been developed for outorg using the
+;; `ert-buffer' library, the so called 'conversion test'. It has the
+;; following steps:
+
+;;  1. programming-mode -> org-mode
+
+;;  2. edit in org-mode, store undo-information
+
+;;  3. org-mode -> programming-mode
+
+;;  4. programming-mode -> org-mode (again)
+
+;;  5. undo edits
+
+;;  6. org-mode -> programming-mode (again)
+
+;; After these 4 conversions, the original programming-mode buffer
+;; must be unchanged when the conversion process is perfect, i.e. does
+;; not introduce any changes itself. See `outorg-test.el' for details.
 
 ;;;;; Emacs Version
 
-;; `outorg.el' works with [GNU Emacs 24.2.1
-;; (x86_64-unknown-linux-gnu, GTK+ Version 3.6.4) of 2013-01-20 on
-;; eric]. No attempts of testing with older versions or other types
-;; of Emacs have been made (yet).
+;; Outorg works with GNU Emacs 24.2.1 or later. No attempts of testing
+;; with older versions or other types of Emacs have been made (yet).
 
 ;;;; ChangeLog
 
