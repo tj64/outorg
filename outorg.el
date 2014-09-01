@@ -791,12 +791,24 @@ and thus be transformed to text - and thereby activated - every
 	    (delete-region (point) (line-end-position))
 	    (goto-char beg-block)
 	    (forward-line -1)
-	    (when sw
+	    (when (org-string-nw-p sw)
 	      (newline)
 	      (insert (format "#+header: %s" sw)))
-	    (when args
-	      (newline)
-	      (insert (format "#+header: %s" args)))))))))
+	    (when (org-string-nw-p args)
+	      (let ((params
+		     (ignore-errors
+		       (org-split-string args)))
+		    headers)
+		(while params
+		  (setq headers
+			(cons
+			 (format "#+header: %s %s"
+				 (org-no-properties (pop params))
+				 (org-no-properties (pop params)))
+			 headers)))
+		(newline)
+		(insert (mapconcat 'identity headers "\n"))))))))))
+	      ;; (insert (format "#+header: %s" args)))))))))
 
 ;; Thx to Eric Abrahamsen for the tip about `mail-header-separator'
 (defun outorg-prepare-message-mode-buffer-for-editing ()
