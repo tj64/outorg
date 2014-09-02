@@ -775,9 +775,8 @@ specify permanent switches and arguments even for source-code
 blocks that are transformed back to code after
 `outorg-copy-and-switch' is called. They will remain as comment
 lines directly over their code section in the source-code buffer,
-and thus be transformed to text - and thereby activated - every
-
-;; time `outorg-edit-as-org' is called."
+and thus be transformed to text - and thereby activated -
+everytime `outorg-edit-as-org' is called."
   (save-excursion
     (let* ((mode (outorg-get-buffer-mode
 		  (marker-buffer outorg-code-buffer-point-marker)))
