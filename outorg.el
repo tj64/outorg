@@ -38,7 +38,7 @@
 
 ;; Thus org-mode and programming-mode are just two different views on
 ;; the outshine-style structured source-file, and outorg is the tool
-;; to switch between these two modes. When switching from a
+;; to switch between these two views. When switching from a
 ;; programming-mode to org-mode, the comments are converted to text
 ;; and the source-code is put into src-blocks. When switching back
 ;; from org-mode to the programming-mode, the process is reversed -
@@ -104,7 +104,7 @@
 
 ;; You can get outorg.el either from Github (see section MetaData) or
 ;; via MELPA. It depends on outshine.el, so you have to install and
-;; configu re outshine first to make outorg work.
+;; configure outshine first to make outorg work.
 
 ;; Installation is easy, simply insert
 
