@@ -268,6 +268,18 @@ names.")
 Used by `org-babel-temp-file'.  This directory will be removed on
 Emacs shutdown."))
 
+(defvar outorg-last-temp-file nil
+  "Storage for absolute file name of last saved temp-file.")
+
+(defvar outorg-agenda-files ()
+  "List of absolute file names of outorg agenda-files.")
+
+(defvar outorg-clock-running-p nil
+  "Non-nil if a clock was started in the *outorg-edit-buffer*.")
+
+(defvar outorg-called-via-outshine-use-outorg-p nil
+  "Non-nil if outorg was called via `outshine-use-outorg' command")
+
 (defvar outorg-oldschool-elisp-headers-p nil
   "Non-nil if an Emacs Lisp file uses oldschool headers ';;;+'")
 
@@ -580,6 +592,7 @@ of `outorg-temporary-directory'."
             ;; (buffer-file-name
              (marker-buffer
               outorg-code-buffer-point-marker)))))))
+    (setq outorg-last-temp-file tmp-file)
     (write-region nil nil tmp-file nil 'VISIT)))
 
 ;; copied and adapted from ob-core.el
@@ -627,6 +640,8 @@ of `outorg-temporary-directory'."
     (setq outorg-ask-user-for-export-template-file-p nil)
     (setq outorg-keep-export-template-p nil)
     (setq outorg-propagate-changes-p nil)
+    (setq outorg-clock-running-p nil)
+    (setq outorg-called-via-outshine-use-outorg-p nil)
     (when outorg-markers-to-move
       (mapc (lambda (m)
 	      (when (markerp m)
@@ -1536,6 +1551,95 @@ With ARG, act conditional on the raw value of ARG:
 ;; in global variable `outorg-src-block-data'."
   
 
+(defun outorg-new-copy-edits-and-exit ()
+  "Replace code-buffer content with (converted) edit-buffer content and
+  kill edit-buffer"
+  (interactive)
+  ;; (message "post-command-hook: %s" post-command-hook)
+  ;; (remove-hook 'post-command-hook
+  ;; 	       'outorg-copy-edits-and-exit 'LOCAL)
+  (if (not buffer-undo-list)
+      ;; edit-buffer not modified at all
+      (progn
+	(move-marker outorg-edit-buffer-point-marker (point))
+	;; restore window configuration
+	(set-window-configuration
+	 outorg-initial-window-config)
+	;; avoid confirmation prompt when killing the edit buffer
+	(with-current-buffer
+	    (marker-buffer outorg-edit-buffer-point-marker)
+	  (set-buffer-modified-p nil))
+	(kill-buffer
+	 (marker-buffer outorg-edit-buffer-point-marker))
+	(and outorg-code-buffer-read-only-p
+	     (setq inhibit-read-only nil))
+	;; (and (eq major-mode 'message-mode)
+	(and (derived-mode-p 'message-mode)
+	     (outorg-prepare-message-mode-buffer-for-sending))
+	(and (eq major-mode 'picolisp-mode)
+	     (save-excursion
+	       (save-match-data
+		 (goto-char (point-max))
+		 (re-search-backward
+		  (concat "(" (regexp-quote "********") ")")
+		  nil 'NOERROR))))
+	;; clean up global vars
+	(outorg-reset-global-vars))
+    ;; edit-buffer modified
+    (widen)
+    ;; propagate changes to associated doc files
+    (when (and outorg-propagate-changes-p
+	       (require 'org-watchdoc nil t))
+      (save-excursion
+	(goto-char (point-min))
+	(org-watchdoc-propagate-changes)))
+    (let ((mode (outorg-get-buffer-mode
+		 (marker-buffer outorg-code-buffer-point-marker))))
+      (and outorg-unindent-active-source-blocks-p
+	   (outorg-unindent-active-source-blocks mode))
+      (move-marker outorg-edit-buffer-point-marker (point))
+      (move-marker outorg-edit-buffer-beg-of-subtree-marker
+		   (or
+		    (ignore-errors
+		      (save-excursion
+			(outline-previous-heading)
+			(point)))
+		    1))    
+      ;; special case R-mode
+      (if (eq mode 'ess-mode)
+	  (funcall 'R-mode)
+	(funcall mode)))
+    (outorg-convert-back-to-code)
+    (outorg-save-markers outorg-buffer-markers)
+    (outorg-replace-code-with-edits)
+    (set-window-configuration
+     outorg-initial-window-config)
+    (goto-char outorg-code-buffer-point-marker)
+    ;; avoid confirmation prompt when killing the edit buffer
+    (with-current-buffer
+	(marker-buffer outorg-edit-buffer-point-marker)
+      (set-buffer-modified-p nil))
+    (kill-buffer
+     (marker-buffer outorg-edit-buffer-point-marker))
+    ;; (switch-to-buffer
+    ;;  (marker-buffer outorg-code-buffer-point-marker))
+    ;; (goto-char
+    ;;  (marker-position outorg-code-buffer-point-marker))
+    (and outorg-code-buffer-read-only-p
+	 (setq inhibit-read-only nil))
+    ;; (and (eq major-mode 'message-mode)
+    (and (derived-mode-p 'message-mode)
+	 (outorg-prepare-message-mode-buffer-for-sending))
+    (and (eq major-mode 'picolisp-mode)
+	 (save-excursion
+	   (save-match-data
+	     (goto-char (point-max))
+	     (re-search-backward
+	      (concat "(" (regexp-quote "********") ")")
+	      nil 'NOERROR)))
+	 (outorg-prepare-iorg-edit-buffer-for-posting))
+    (outorg-reset-global-vars)))
+
 (defun outorg-copy-edits-and-exit ()
   "Replace code-buffer content with (converted) edit-buffer content and
   kill edit-buffer"
@@ -1582,14 +1686,14 @@ With ARG, act conditional on the raw value of ARG:
 		 (marker-buffer outorg-code-buffer-point-marker))))
       (and outorg-unindent-active-source-blocks-p
 	   (outorg-unindent-active-source-blocks mode))
-    (move-marker outorg-edit-buffer-point-marker (point))
-    (move-marker outorg-edit-buffer-beg-of-subtree-marker
-		 (or
-		  (ignore-errors
-		    (save-excursion
-		      (outline-previous-heading)
-		      (point)))
-		  1))    
+      (move-marker outorg-edit-buffer-point-marker (point))
+      (move-marker outorg-edit-buffer-beg-of-subtree-marker
+		   (or
+		    (ignore-errors
+		      (save-excursion
+			(outline-previous-heading)
+			(point)))
+		    1))    
       ;; special case R-mode
       (if (eq mode 'ess-mode)
 	  (funcall 'R-mode)
@@ -1600,14 +1704,7 @@ With ARG, act conditional on the raw value of ARG:
     (set-window-configuration
      outorg-initial-window-config)
     (goto-char outorg-code-buffer-point-marker)
-    ;; (if outorg-edit-whole-buffer-p
-    ;; 	(goto-char outorg-code-buffer-point-marker)
-    ;;   (goto-char
-    ;;    (1- (+ (marker-position
-    ;; 	       outorg-code-buffer-point-marker)
-    ;; 	      (marker-position
-    ;; 	       outorg-code-buffer-beg-of-subtree-marker)))))
-    ;; avoid confirmation prompt when killing the edit buffer
+    ;; Avoid confirmation prompt when killing the edit buffer
     (with-current-buffer
 	(marker-buffer outorg-edit-buffer-point-marker)
       (set-buffer-modified-p nil))
