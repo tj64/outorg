@@ -666,12 +666,16 @@ Finally add one newline."
   "Save markers from MARKER-LST in `outorg-markers-to-move'."
   (save-restriction
     (widen)
-    (let* ((beg (if outorg-edit-whole-buffer-p
+    (let* ((beg (if (or outorg-edit-whole-buffer-p
+			(equal (buffer-name)
+			       "*outorg-edit-buffer*"))
 		    (point-min)
 		  (save-excursion
 		    (outline-previous-heading)
 		    (point))))
-	   (end (if outorg-edit-whole-buffer-p
+	   (end (if (or outorg-edit-whole-buffer-p
+			(equal (buffer-name)
+			       "*outorg-edit-buffer*"))
 		    (point-max)
 		  (save-excursion
 		    (outline-end-of-subtree)
