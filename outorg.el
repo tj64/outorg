@@ -274,8 +274,8 @@ Emacs shutdown."))
 (defvar outorg-agenda-files ()
   "List of absolute file names of outorg agenda-files.")
 
-(defvar outorg-clock-running-p nil
-  "Non-nil if a clock was started in the *outorg-edit-buffer*.")
+(defvar outorg-set-buffer-undo-list-p nil
+  "Non-nil if `buffer-undo-list' for the *outorg-edit-buffer* should be set to ((1 . 1)) in case the buffer wasn't modified.")
 
 (defvar outorg-called-via-outshine-use-outorg-p nil
   "Non-nil if outorg was called via `outshine-use-outorg' command")
@@ -640,7 +640,7 @@ of `outorg-temporary-directory'."
     (setq outorg-ask-user-for-export-template-file-p nil)
     (setq outorg-keep-export-template-p nil)
     (setq outorg-propagate-changes-p nil)
-    (setq outorg-clock-running-p nil)
+    (setq outorg-set-buffer-undo-list-p nil)
     (setq outorg-called-via-outshine-use-outorg-p nil)
     (when outorg-markers-to-move
       (mapc (lambda (m)
@@ -685,9 +685,11 @@ Finally add one newline."
 			(equal (buffer-name)
 			       "*outorg-edit-buffer*"))
 		    (point-min)
-		  (save-excursion
-		    (outline-previous-heading)
-		    (point))))
+		  (if (outline-on-heading-p)
+		      (point)
+		    (save-excursion
+		      (outline-previous-heading)
+		      (point)))))
 	   (end (if (or outorg-edit-whole-buffer-p
 			(equal (buffer-name)
 			       "*outorg-edit-buffer*"))
