@@ -238,6 +238,10 @@ There is a mode hook, and two commands:
 "Associations between major-mode-name and org-babel language
 names.")
 
+(defconst outorg-buffer-markers
+ '(point-marker beg-of-subtree-marker)
+ "Outorg buffer markers.")
+
 ;;;; Vars
 
 (defvar outline-minor-mode-prefix "\C-c"
@@ -296,6 +300,20 @@ them on-demand in the *outorg-edit-buffer*. The value of this variable is
   "Non-nil means propagate changes to associated doc files.")
 ;; (make-variable-buffer-local 'outorg-propagate-changes-p)
 
+(defvar outorg-code-buffer-point-marker (make-marker)
+ "Marker to store position in code-buffer.")
+
+(defvar outorg-edit-buffer-point-marker (make-marker)
+ "Marker to store position in edit-buffer.")
+
+(defvar outorg-code-buffer-beg-of-subtree-marker (make-marker)
+  "Marker to store begin of current subtree in
+  code-buffer.")
+
+(defvar outorg-edit-buffer-beg-of-subtree-marker (make-marker)
+  "Marker to store begin of current subtree in
+  edit-buffer.")
+
 (defvar outorg-markers-to-move nil
   "Markers that should be moved with a cut-and-paste operation.
 Those markers are stored together with their positions relative to
@@ -310,12 +328,10 @@ the start of the region.")
 ;;   org-log-note-return-to)
 ;;  "Org log note markers to be tracked by outorg.")
 
-;; TODO add markers
-;; outorg-code-buffer-point-marker 
-;; outorg-code-buffer-beg-of-subtree-marker
-;; outorg-edit-buffer-marker
-(defvar outorg-tracked-markers '()
- "Outorg markers to be tracked.")
+;; (defvar outorg-tracked-markers '(outorg-code-buffer-point-marker
+;;  outorg-code-buffer-beg-of-subtree-marker
+;;  outorg-edit-buffer-point-marker)
+;;  "Outorg markers to be tracked.")
 
 (defvar outorg-org-finish-function-called-p nil
   "Non-nil if `org-finish-function' was called, nil otherwise.")
@@ -601,7 +617,8 @@ of `outorg-temporary-directory'."
   (ignore-errors
     (set-marker outorg-code-buffer-point-marker nil)
     (set-marker outorg-code-buffer-beg-of-subtree-marker nil)
-    (set-marker outorg-edit-buffer-marker nil)
+    (set-marker outorg-edit-buffer-point-marker nil)
+    (set-marker outorg-edit-buffer-beg-of-subtree-marker nil)
     (setq outorg-edit-whole-buffer-p nil)
     (setq outorg-initial-window-config nil)
     (setq outorg-code-buffer-read-only-p nil)
@@ -649,39 +666,71 @@ Finally add one newline."
   "Save markers from MARKER-LST in `outorg-markers-to-move'."
   (save-restriction
     (widen)
-    (let ((beg (if outorg-edit-whole-buffer-p
-		   (point-min)
-		 (save-excursion
-		   (outline-previous-heading))))
-	  (end (if outorg-edit-whole-buffer-p
-		   (point-max)
-		 (save-excursion
-		   (outline-end-of-subtree)
-		   (point)))))
+    (let* ((beg (if outorg-edit-whole-buffer-p
+		    (point-min)
+		  (save-excursion
+		    (outline-previous-heading)
+		    (point))))
+	   (end (if outorg-edit-whole-buffer-p
+		    (point-max)
+		  (save-excursion
+		    (outline-end-of-subtree)
+		    (point))))
+	   (prefix (cond
+		    ((eq (current-buffer)
+			 (marker-buffer
+			  outorg-code-buffer-point-marker))
+		     "outorg-code-buffer-")
+		    ((eq (current-buffer)
+			 (marker-buffer
+			  outorg-edit-buffer-point-marker))
+		     "outorg-edit-buffer-")
+		    (t (error "This should not happen"))))
+	   (markers (mapcar
+		     (lambda (--marker)
+		       (intern (format "%s%s" prefix --marker)))
+		     marker-lst)))
       (mapc
-       (lambda (x)
-	 (outorg-check-and-save-marker x beg end))
-       marker-lst))))
+       (lambda (--marker)
+	 (outorg-check-and-save-marker --marker beg end))
+       markers))))
 
-;; from org.el
-(defun outorg-check-and-save-marker (marker beg end)
-  "Check if MARKER is between BEG and END.
+;; adapted from org.el
+(defun outorg-check-and-save-marker (marker-sym beg end)
+  "Check if MARKER-SYM is between BEG and END.
 If yes, remember the marker and the distance to BEG."
-  (when (and (markerp marker)
-	     (marker-buffer marker)
-             (equal (marker-buffer marker) (current-buffer)))
-    (if (and (>= marker beg) (< marker end))
-        (push (cons marker (- marker beg))
-              outorg-markers-to-move))))
+  (let ((marker (and (symbolp marker-sym) (eval marker-sym))))
+    (when (and (markerp marker)
+	       (marker-buffer marker)
+	       (equal (marker-buffer marker) (current-buffer)))
+      (when (and (>= marker beg) (< marker end))
+	(let* ((splitted-marker-name
+		(split-string
+		 (symbol-name marker-sym)
+		 "\\(outorg-\\|-buffer-\\)" t))
+	       (marker-buf (intern (car splitted-marker-name)))
+	       (marker-typ (intern (cadr splitted-marker-name))))
+	  (push (list marker-buf marker-typ (- marker beg))
+		outorg-markers-to-move))))))
 
 (defun outorg-reinstall-markers-in-region (beg)
   "Move all remembered markers to their position relative to BEG."
   (message "%s" outorg-markers-to-move)
-  (mapc (lambda (x)
-          (move-marker (car x) (+ beg (cdr x))))
+  (mapc (lambda (--marker-lst)
+          (move-marker
+	   (eval
+	    (intern
+	     (format "%s%s"
+		     (cond
+		      ((eq (car --marker-lst) 'code)
+		       "outorg-edit-buffer-")
+		      ((eq (car --marker-lst) 'edit)
+		       "outorg-code-buffer-")
+		      (t (error "This should not happen.")))
+		     (cadr --marker-lst))))
+	   (+ beg (caddr --marker-lst))))
         outorg-markers-to-move)
   (setq outorg-markers-to-move nil))
- 
 
 ;;;;; Copy and Convert
 
@@ -1039,13 +1088,14 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
     ;; reinstall outorg-markers
     (outorg-reinstall-markers-in-region (point-min))  
     ;; set point
-    (goto-char
-     (if outorg-edit-whole-buffer-p
-         (marker-position outorg-code-buffer-point-marker)
-       ;; FIXME=> use saved and restored markers instead
-       (1+ (- (marker-position outorg-code-buffer-point-marker)
-              (marker-position
-	       outorg-code-buffer-beg-of-subtree-marker)))))
+    (goto-char outorg-edit-buffer-point-marker)
+    ;; (goto-char
+    ;;  (if outorg-edit-whole-buffer-p
+    ;;      (marker-position outorg-code-buffer-point-marker)
+    ;;    ;; FIXME=> use saved and restored markers instead
+    ;;    (1+ (- (marker-position outorg-code-buffer-point-marker)
+    ;;           (marker-position
+    ;; 	       outorg-code-buffer-beg-of-subtree-marker)))))
     ;; activate programming language major mode and convert to org
     (let ((mode (outorg-get-buffer-mode
                  (marker-buffer outorg-code-buffer-point-marker))))
@@ -1285,10 +1335,10 @@ Assume that edit-buffer major-mode has been set back to the
 		      (regexp-quote
 		       (outorg-get-babel-name
 			buffer-mode 'AS-STRG-P))
-		      "[^ ]*?\n#\\+end_src\\)") ; NUL char
+		      "[^\000]*?\n#\\+end_src\\)") ; NUL char
 	    (concat 
 	     "\\(?:#\\+begin_example"
-	     "[^\\000]*?\n#\\+end_example\\)")))
+	     "[^\000]*?\n#\\+end_example\\)")))
 	 (first-block-p t))
     ;; 1st run: outcomment text, delete (active) block delimiters
     ;; reset (left-over) marker
@@ -1354,7 +1404,7 @@ Assume that edit-buffer major-mode has been set back to the
 
 (defun outorg-replace-code-with-edits ()
   "Replace code-buffer contents with edits."
-  (let* ((edit-buf (marker-buffer outorg-edit-buffer-marker))
+  (let* ((edit-buf (marker-buffer outorg-edit-buffer-point-marker))
          (code-buf (marker-buffer outorg-code-buffer-point-marker))
          (edit-buf-point-min
           (with-current-buffer edit-buf
@@ -1374,7 +1424,7 @@ Assume that edit-buffer major-mode has been set back to the
               (erase-buffer))
             (insert-buffer-substring-no-properties
              edit-buf edit-buf-point-min edit-buf-point-max)
-	(outorg-reinstall-markers-in-region (point-min)))
+	    (outorg-reinstall-markers-in-region (point-min)))
         (goto-char
 	 (marker-position outorg-code-buffer-point-marker))
         (save-restriction
@@ -1387,8 +1437,8 @@ Assume that edit-buffer major-mode has been set back to the
              (point)))
           (delete-region (point-min) (point-max))
           (insert-buffer-substring-no-properties
-           edit-buf edit-buf-point-min edit-buf-point-max))
-	(outorg-reinstall-markers-in-region (point-min))
+           edit-buf edit-buf-point-min edit-buf-point-max)
+	  (outorg-reinstall-markers-in-region (point-min)))
         ;; (save-buffer)
         ))))
 
@@ -1430,15 +1480,16 @@ With ARG, act conditional on the raw value of ARG:
             (concat "(" (regexp-quote "********") ")")
 	    nil 'NOERROR)))
        (outorg-prepare-iorg-edit-buffer-for-editing))
-  (setq outorg-code-buffer-point-marker (point-marker))
+  (move-marker outorg-code-buffer-point-marker (point))
   (save-excursion
     (or
-     (outline-on-heading-p 'INVISIBLE-OK))
-    (ignore-errors
-      (outline-back-to-heading 'INVISIBLE-OK))
-    (ignore-errors
-      (outline-next-heading))
-    (setq outorg-code-buffer-beg-of-subtree-marker (point-marker)))
+     (outline-on-heading-p 'INVISIBLE-OK)
+     (ignore-errors
+       (outline-back-to-heading 'INVISIBLE-OK))
+     (ignore-errors
+       (outline-next-heading)))
+    (move-marker
+     outorg-code-buffer-beg-of-subtree-marker (point)))
   (and arg
        (cond
         ((equal arg '(4))
@@ -1465,7 +1516,9 @@ With ARG, act conditional on the raw value of ARG:
         (current-window-configuration))
   ;; (outorg-save-markers
   ;;  (append outorg-markers-to-move outorg-tracked-markers))
-  (outorg-save-markers outorg-tracked-markers)
+
+  ;; (outorg-save-markers outorg-tracked-markers)
+  (outorg-save-markers outorg-buffer-markers)
   (outorg-copy-and-convert))
 
 ;; (defun outorg-gather-src-block-data ()
@@ -1489,16 +1542,16 @@ With ARG, act conditional on the raw value of ARG:
   (if (not buffer-undo-list)
       ;; edit-buffer not modified at all
       (progn
-	(setq outorg-edit-buffer-marker (point-marker))
+	(move-marker outorg-edit-buffer-point-marker (point))
 	;; restore window configuration
 	(set-window-configuration
 	 outorg-initial-window-config)
 	;; avoid confirmation prompt when killing the edit buffer
 	(with-current-buffer
-	    (marker-buffer outorg-edit-buffer-marker)
+	    (marker-buffer outorg-edit-buffer-point-marker)
 	  (set-buffer-modified-p nil))
 	(kill-buffer
-	 (marker-buffer outorg-edit-buffer-marker))
+	 (marker-buffer outorg-edit-buffer-point-marker))
 	(and outorg-code-buffer-read-only-p
 	     (setq inhibit-read-only nil))
 	;; (and (eq major-mode 'message-mode)
@@ -1525,34 +1578,37 @@ With ARG, act conditional on the raw value of ARG:
 		 (marker-buffer outorg-code-buffer-point-marker))))
       (and outorg-unindent-active-source-blocks-p
 	   (outorg-unindent-active-source-blocks mode))
-      ;; FIXME do not set org-log-note-marker
-      ;; (outorg-save-markers outorg-tracked-org-markers)
-      ;; FIXME delete
-      ;; (car (split-string
-      ;;       (symbol-name mode) "-mode" 'OMIT-NULLS))))
+    (move-marker outorg-edit-buffer-point-marker (point))
+    (move-marker outorg-edit-buffer-beg-of-subtree-marker
+		 (or
+		  (ignore-errors
+		    (save-excursion
+		      (outline-previous-heading)
+		      (point)))
+		  1))    
       ;; special case R-mode
       (if (eq mode 'ess-mode)
 	  (funcall 'R-mode)
 	(funcall mode)))
-    ;; (funcall
-    ;;  (outorg-get-buffer-mode
-    ;;   (marker-buffer outorg-code-buffer-point-marker)))
-    (setq outorg-edit-buffer-marker (point-marker))
     (outorg-convert-back-to-code)
+    (outorg-save-markers outorg-buffer-markers)
     (outorg-replace-code-with-edits)
     (set-window-configuration
      outorg-initial-window-config)
-    (if outorg-edit-whole-buffer-p
-	(goto-char (marker-position outorg-edit-buffer-marker))
-      (goto-char (1- (+ (marker-position
-			 outorg-edit-buffer-marker)
-			(marker-position
-			 outorg-code-buffer-beg-of-subtree-marker)))))
+    (goto-char outorg-code-buffer-point-marker)
+    ;; (if outorg-edit-whole-buffer-p
+    ;; 	(goto-char outorg-code-buffer-point-marker)
+    ;;   (goto-char
+    ;;    (1- (+ (marker-position
+    ;; 	       outorg-code-buffer-point-marker)
+    ;; 	      (marker-position
+    ;; 	       outorg-code-buffer-beg-of-subtree-marker)))))
     ;; avoid confirmation prompt when killing the edit buffer
-    (with-current-buffer (marker-buffer outorg-edit-buffer-marker)
+    (with-current-buffer
+	(marker-buffer outorg-edit-buffer-point-marker)
       (set-buffer-modified-p nil))
     (kill-buffer
-     (marker-buffer outorg-edit-buffer-marker))
+     (marker-buffer outorg-edit-buffer-point-marker))
     ;; (switch-to-buffer
     ;;  (marker-buffer outorg-code-buffer-point-marker))
     ;; (goto-char
@@ -1567,7 +1623,8 @@ With ARG, act conditional on the raw value of ARG:
 	   (save-match-data
 	     (goto-char (point-max))
 	     (re-search-backward
-	      (concat "(" (regexp-quote "********") ")") nil 'NOERROR)))
+	      (concat "(" (regexp-quote "********") ")")
+	      nil 'NOERROR)))
 	 (outorg-prepare-iorg-edit-buffer-for-posting))
     (outorg-reset-global-vars)))
 
