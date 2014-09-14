@@ -275,7 +275,7 @@ Emacs shutdown."))
   "List of absolute file names of outorg agenda-files.")
 
 (defvar outorg-set-buffer-undo-list-p nil
-  "Non-nil if `buffer-undo-list' for the *outorg-edit-buffer* should be set to ((1 . 1)) in case the buffer wasn't modified.")
+  "Non-nil if *outorg-edit-buffer* should be treated as modified, even if `buffer-undo-list' is nil.")
 
 (defvar outorg-called-via-outshine-use-outorg-p nil
   "Non-nil if outorg was called via `outshine-use-outorg' command")
@@ -736,7 +736,7 @@ If yes, remember the marker and the distance to BEG."
 
 (defun outorg-reinstall-markers-in-region (beg)
   "Move all remembered markers to their position relative to BEG."
-  (message "%s" outorg-markers-to-move)
+  ;; (message "%s" outorg-markers-to-move)
   (mapc (lambda (--marker-lst)
           (move-marker
 	   (eval
@@ -1552,8 +1552,7 @@ With ARG, act conditional on the raw value of ARG:
 
 ;; in global variable `outorg-src-block-data'."
   
-
-(defun outorg-new-copy-edits-and-exit ()
+(defun outorg-copy-edits-and-exit ()
   "Replace code-buffer content with (converted) edit-buffer content and
   kill edit-buffer"
   (interactive)
@@ -1601,12 +1600,11 @@ With ARG, act conditional on the raw value of ARG:
 	   (outorg-unindent-active-source-blocks mode))
       (move-marker outorg-edit-buffer-point-marker (point))
       (move-marker outorg-edit-buffer-beg-of-subtree-marker
-		   (or
-		    (ignore-errors
-		      (save-excursion
-			(outline-previous-heading)
-			(point)))
-		    1))    
+		   (or (ignore-errors
+			 (save-excursion
+			   (outline-previous-heading)
+			   (point)))
+		       1))    
       ;; special case R-mode
       (if (eq mode 'ess-mode)
 	  (funcall 'R-mode)
@@ -1642,14 +1640,15 @@ With ARG, act conditional on the raw value of ARG:
 	 (outorg-prepare-iorg-edit-buffer-for-posting))
     (outorg-reset-global-vars)))
 
-(defun outorg-copy-edits-and-exit ()
+(defun outorg-old-copy-edits-and-exit ()
   "Replace code-buffer content with (converted) edit-buffer content and
   kill edit-buffer"
   (interactive)
   ;; (message "post-command-hook: %s" post-command-hook)
   ;; (remove-hook 'post-command-hook
   ;; 	       'outorg-copy-edits-and-exit 'LOCAL)
-  (if (not buffer-undo-list)
+  (if (and (not buffer-undo-list)
+	   (not outorg-set-buffer-undo-list-p))
       ;; edit-buffer not modified at all
       (progn
 	(move-marker outorg-edit-buffer-point-marker (point))
@@ -1732,8 +1731,6 @@ With ARG, act conditional on the raw value of ARG:
     (outorg-reset-global-vars)))
 
 ;;;;; Insert Export Template
-
-
 
 ;; (defun outorg-toggle-export-template-insertion (&optional arg)
 ;;   "Toggles automatic insertion of export template into *outorg-edit-buffer*
