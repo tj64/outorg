@@ -271,9 +271,6 @@ Emacs shutdown."))
 (defvar outorg-last-temp-file nil
   "Storage for absolute file name of last saved temp-file.")
 
-(defvar outorg-agenda-files ()
-  "List of absolute file names of outorg agenda-files.")
-
 (defvar outorg-treat-buffer-as-modified-p nil
   "Non-nil if *outorg-edit-buffer* should be treated as if
   modified, even if `buffer-undo-list' is nil.")
