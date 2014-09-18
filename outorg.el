@@ -241,9 +241,16 @@ There is a mode hook, and two commands:
 "Associations between major-mode-name and org-babel language
 names.")
 
-(defconst outorg-buffer-markers
- '(point-marker beg-of-subtree-marker)
- "Outorg buffer markers.")
+(defconst outorg-tracked-markers '(point-marker
+beg-of-subtree-marker)
+ "Outorg markers to be tracked. The actual marker names are constructed by adding a prefix, either 'outorg-code-buffer-' or 'outorg-edit-buffer-'.")
+
+(defconst outorg-tracked-org-markers '(org-clock-marker
+  org-clock-hd-marker org-clock-default-task
+  org-clock-interrupted-task selected-task org-open-link-marker
+  org-log-note-marker org-log-note-return-to
+  org-entry-property-inherited-from)
+ "Org markers to be tracked by outorg.")
 
 ;;;; Vars
 
@@ -326,20 +333,6 @@ them on-demand in the *outorg-edit-buffer*. The value of this variable is
   "Markers that should be moved with a cut-and-paste operation.
 Those markers are stored together with their positions relative to
 the start of the region.")
-
-(defvar outorg-tracked-org-markers '(org-clock-marker
-  org-clock-hd-marker org-open-link-marker org-log-note-marker
-  org-log-note-return-to org-entry-property-inherited-from)
- "Org markers to be tracked by outorg.")
-
-;; (defvar outorg-org-log-note-markers '(org-log-note-marker
-;;   org-log-note-return-to)
-;;  "Org log note markers to be tracked by outorg.")
-
-;; (defvar outorg-tracked-markers '(outorg-code-buffer-point-marker
-;;  outorg-code-buffer-beg-of-subtree-marker
-;;  outorg-edit-buffer-point-marker)
-;;  "Outorg markers to be tracked.")
 
 (defvar outorg-org-finish-function-called-p nil
   "Non-nil if `org-finish-function' was called, nil otherwise.")
@@ -704,7 +697,17 @@ Finally add one newline."
 		    (t (error "This should not happen"))))
 	   (markers (mapcar
 		     (lambda (--marker)
-		       (intern (format "%s%s" prefix --marker)))
+		       (intern
+			(format
+			 "%s%s"
+			 (if (string=
+			      (car (split-string
+				    (symbol-name --marker)
+				    "-" t))
+			      "org")
+			     ""
+			   prefix)
+			 --marker)))
 		     marker-lst)))
       (mapc
        (lambda (--marker)
@@ -712,26 +715,38 @@ Finally add one newline."
        markers))))
 
 ;; adapted from org.el
-(defun outorg-check-and-save-marker (marker-sym beg end)
-  "Check if MARKER-SYM is between BEG and END.
+(defun outorg-check-and-save-marker (marker-or-var beg end)
+  "Check if MARKER-OR-VAR is between BEG and END.
 If yes, remember the marker and the distance to BEG."
-  (let ((marker (and (symbolp marker-sym) (eval marker-sym))))
+  (let ((marker (cond
+		 ((markerp marker-or-var) marker-or-var)
+		 ((boundp marker-or-var) (eval marker-or-var))
+		 (t nil))))
     (when (and (markerp marker)
 	       (marker-buffer marker)
 	       (equal (marker-buffer marker) (current-buffer)))
       (when (and (>= marker beg) (< marker end))
 	(let* ((splitted-marker-name
 		(split-string
-		 (symbol-name marker-sym)
+		 (symbol-name marker-or-var)
 		 "\\(outorg-\\|-buffer-\\)" t))
-	       (marker-buf (intern (car splitted-marker-name)))
-	       (marker-typ (intern (cadr splitted-marker-name))))
+	       (split-gt-1-p (> (length splitted-marker-name) 1))
+	       (marker-buf
+		(ignore-errors
+		  (when split-gt-1-p
+		    (intern (car splitted-marker-name)))))
+	       (marker-typ
+		(ignore-errors
+		  (if split-gt-1-p
+		      (intern (cadr splitted-marker-name))
+		    (intern (car splitted-marker-name))))))
 	  (push (list marker-buf marker-typ (- marker beg))
 		outorg-markers-to-move))))))
 
 (defun outorg-reinstall-markers-in-region (beg)
   "Move all remembered markers to their position relative to BEG."
-  ;; (message "%s" outorg-markers-to-move)
+  (message "Reinstalling marker-to-move:\n%s"
+	   outorg-markers-to-move)
   (mapc (lambda (--marker-lst)
           (move-marker
 	   (eval
@@ -742,6 +757,9 @@ If yes, remember the marker and the distance to BEG."
 		       "outorg-edit-buffer-")
 		      ((eq (car --marker-lst) 'edit)
 		       "outorg-code-buffer-")
+		      ((and (booleanp (car --marker-lst))
+			    (null (car --marker-lst)))
+		       "")
 		      (t (error "This should not happen.")))
 		     (cadr --marker-lst))))
 	   (+ beg (caddr --marker-lst))))
@@ -1530,11 +1548,8 @@ With ARG, act conditional on the raw value of ARG:
        (setq outorg-oldschool-elisp-headers-p t))
   (setq outorg-initial-window-config
         (current-window-configuration))
-  ;; (outorg-save-markers
-  ;;  (append outorg-markers-to-move outorg-tracked-markers))
-
-  ;; (outorg-save-markers outorg-tracked-markers)
-  (outorg-save-markers outorg-buffer-markers)
+  (outorg-save-markers (append outorg-tracked-markers
+			       outorg-tracked-org-markers))
   (outorg-copy-and-convert))
 
 ;; (defun outorg-gather-src-block-data ()
@@ -1602,7 +1617,8 @@ With ARG, act conditional on the raw value of ARG:
 	  (funcall 'R-mode)
 	(funcall mode)))
     (outorg-convert-back-to-code)
-    (outorg-save-markers outorg-buffer-markers)
+    (outorg-save-markers (append outorg-tracked-markers
+				 outorg-tracked-org-markers))
     (outorg-replace-code-with-edits)
     (set-window-configuration
      outorg-initial-window-config)
