@@ -183,6 +183,9 @@ There is a mode hook, and two commands:
 (defconst outorg-version "1.0"
   "outorg version number.")
 
+(defconst outorg-edit-buffer-name "*outorg-edit-buffer*"
+  "Name of the temporary outorg edit buffer.")
+
 ;; FIXME org-babel names should be correct, but major-mode names need
 ;; to be cross-checked!
 (defconst outorg-language-name-assocs
@@ -264,9 +267,8 @@ names.")
 	     (file-exists-p outorg-temporary-directory)
 	     outorg-temporary-directory)
 	(make-temp-file "outorg-" t))
-    "Directory to hold temporary files created to edit code blocks.
-Used by `org-babel-temp-file'.  This directory will be removed on
-Emacs shutdown."))
+    "Directory to hold outorg's temporary files.
+This directory will be removed on Emacs shutdown."))
 
 (defvar outorg-last-temp-file nil
   "Storage for absolute file name of last saved temp-file.")
@@ -681,7 +683,7 @@ Finally add one newline."
     (widen)
     (let* ((beg (if (or outorg-edit-whole-buffer-p
 			(equal (buffer-name)
-			       "*outorg-edit-buffer*"))
+			       outorg-edit-buffer-name))
 		    (point-min)
 		  (if (outline-on-heading-p)
 		      (point)
@@ -690,7 +692,7 @@ Finally add one newline."
 		      (point)))))
 	   (end (if (or outorg-edit-whole-buffer-p
 			(equal (buffer-name)
-			       "*outorg-edit-buffer*"))
+			       outorg-edit-buffer-name))
 		    (point-max)
 		  (save-excursion
 		    (outline-end-of-subtree)
@@ -811,7 +813,7 @@ deleted."
     (setq outorg-edit-whole-buffer-p t)
     (setq outorg-initial-window-config
           (current-window-configuration))
-    (with-current-buffer (get-buffer-create "*outorg-edit-buffer*")
+    (with-current-buffer (get-buffer-create outorg-edit-buffer-name)
       (erase-buffer)
       (insert-buffer-substring org-buffer)
       (org-mode)
@@ -1082,7 +1084,7 @@ In `emacs-lisp-mode', transform one oldschool header (only semicolons) into an o
 If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
   the current subtree."
   (let* ((edit-buffer
-          (get-buffer-create "*outorg-edit-buffer*")))
+          (get-buffer-create outorg-edit-buffer-name)))
     (save-restriction
       (with-current-buffer edit-buffer
         (erase-buffer))
