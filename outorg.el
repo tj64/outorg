@@ -242,7 +242,7 @@ There is a mode hook, and two commands:
 names.")
 
 (defconst outorg-tracked-markers '(point-marker
-beg-of-subtree-marker)
+beg-of-subtree-marker mark-marker)
  "Outorg markers to be tracked. The actual marker names are constructed by adding a prefix, either 'outorg-code-buffer-' or 'outorg-edit-buffer-'.")
 
 (defconst outorg-tracked-org-markers '(org-clock-marker
@@ -700,11 +700,11 @@ Finally add one newline."
 		       (intern
 			(format
 			 "%s%s"
-			 (if (string=
+			 (if (string-match
+			      "\\(org\\|mark\\)"
 			      (car (split-string
 				    (symbol-name --marker)
-				    "-" t))
-			      "org")
+				    "-" t)))
 			     ""
 			   prefix)
 			 --marker)))
