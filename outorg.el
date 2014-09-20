@@ -1,14 +1,14 @@
 ;;; outorg.el --- Org-style comment editing
 
 ;; Author: Thorsten Jolitz <tjolitz AT gmail DOT com>
-;; Version: 1.0
+;; Version: 2.0
 ;; URL: https://github.com/tj64/outorg
 
 ;;;; MetaData
 ;;   :PROPERTIES:
 ;;   :copyright: Thorsten Jolitz
 ;;   :copyright-years: 2013+
-;;   :version:  1.0
+;;   :version:  2.0
 ;;   :licence:  GPL 2 or later (free software)
 ;;   :licence-url: http://www.gnu.org/licenses/
 ;;   :part-of-emacs: no
@@ -158,6 +158,7 @@
 
 ;; | date            | author(s)       | version |
 ;; |-----------------+-----------------+---------|
+;; | <2014-09-20 Sa> | Thorsten Jolitz |     2.0 |
 ;; | <2013-05-03 Fr> | Thorsten Jolitz |     1.0 |
 ;; | <2013-02-11 Mo> | Thorsten Jolitz |     0.9 |
 
@@ -180,7 +181,7 @@ There is a mode hook, and two commands:
 ;;; Variables
 ;;;; Consts
 
-(defconst outorg-version "1.0"
+(defconst outorg-version "2.0"
   "outorg version number.")
 
 (defconst outorg-edit-buffer-name "*outorg-edit-buffer*"
