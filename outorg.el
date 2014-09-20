@@ -745,8 +745,6 @@ If yes, remember the marker and the distance to BEG."
 
 (defun outorg-reinstall-markers-in-region (beg)
   "Move all remembered markers to their position relative to BEG."
-  (message "Reinstalling marker-to-move:\n%s"
-	   outorg-markers-to-move)
   (mapc (lambda (--marker-lst)
           (move-marker
 	   (eval
@@ -1072,7 +1070,6 @@ outcommented org-mode headers)."
       (outorg-convert-oldschool-elisp-headline-to-outshine))
     (while (not (eobp))
       (outline-next-heading)
-      (message "point: %s" (point))
       (outorg-convert-oldschool-elisp-headline-to-outshine)))
     (funcall 'outshine-hook-function))
 
@@ -1808,7 +1805,6 @@ Otherwise, all languages found in `org-babel-load-languages' are mapped."
                (add-to-list 'active-modes mode))
          (error nil) ))
      minor-mode-list)
-    ;; (message "Active modes are %s" active-modes)
     active-modes))
 
 
