@@ -1,8 +1,33 @@
-* TODO Version 1.1
+* TODO Version 2.1
 
-** TODO announce new version in PicoLisp  mailing-list
-** TODO announce new version in Org-mode mailing-list
-** TODO change version number (comment and const)
+** TODO quit byte-compiler
+** TODO improve MELPA-package
+** TODO update README
+** TODO set version number
+** TODO announce in org-mode mailing-list
+** TODO announce in emacs-user mailing-list
+
+
+
+* TODO Version 2.0
+
+** DONE update comment-section
+   - State "DONE"       from "TODO"       [2014-09-20 Sa 14:39]
+** DONE port org-mode's marker tracking to outorg
+   - State "DONE"       from "TODO"       [2014-09-20 Sa 14:38]
+** DONE test conversion process for side-effects
+   - State "DONE"       from "TODO"       [2014-09-20 Sa 14:37]
+** DONE (almost) handle special multi-line comments
+   - State "DONE"       from "TODO"       [2014-09-20 Sa 14:36]
+** DONE rewrite conversion functions
+   - State "DONE"       from "TODO"       [2014-09-20 Sa 14:35]
+** TODO clean test file
+** TODO quit byte-compiler
+** TODO improve MELPA-package
+** TODO update README
+** TODO set version number
+** TODO announce in org-mode mailing-list
+** TODO announce in emacs-user mailing-list
 
 
 * DONE Version 1.0
