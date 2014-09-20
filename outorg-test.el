@@ -1,14 +1,14 @@
 ;;; outorg-test.el --- ERT suite for outorg.el
 
 ;; Author: Thorsten Jolitz <tjolitz AT gmail DOT com>
-;; Version: 0.0
+;; Version: 2.0
 ;; URL: https://github.com/tj64/outorg
 
 ;;;; MetaData
 ;;   :PROPERTIES:
 ;;   :copyright: Thorsten Jolitz
 ;;   :copyright-years: 2014+
-;;   :version:  0.9
+;;   :version:  2.0
 ;;   :licence:  GPL 2 or later (free software)
 ;;   :licence-url: http://www.gnu.org/licenses/
 ;;   :part-of-emacs: no

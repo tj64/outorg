@@ -11,6 +11,8 @@
 
 * TODO Version 2.0
 
+** TODO add conversion test-files and test results to repo
+** TODO add outorg-export to the repo 
 ** DONE update comment-section
    - State "DONE"       from "TODO"       [2014-09-20 Sa 14:39]
 ** DONE port org-mode's marker tracking to outorg
