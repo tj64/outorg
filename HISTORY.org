@@ -11,8 +11,10 @@
 
 * TODO Version 2.0
 
+** TODO improve MELPA-package
 ** TODO add conversion test-files and test results to repo
 ** TODO add outorg-export to the repo 
+** TODO clean test file
 ** DONE update comment-section
    - State "DONE"       from "TODO"       [2014-09-20 Sa 14:39]
 ** DONE port org-mode's marker tracking to outorg
@@ -23,9 +25,8 @@
    - State "DONE"       from "TODO"       [2014-09-20 Sa 14:36]
 ** DONE rewrite conversion functions
    - State "DONE"       from "TODO"       [2014-09-20 Sa 14:35]
-** TODO clean test file
-** TODO quit byte-compiler
-** TODO improve MELPA-package
+** DONE quite byte-compiler
+   - State "DONE"       from "TODO"       [2014-09-21 So 02:07]
 ** DONE update README
    - State "DONE"       from "TODO"       [2014-09-20 Sa 14:58]
 ** DONE set version number
