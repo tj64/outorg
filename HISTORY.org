@@ -12,8 +12,10 @@
 * TODO Version 2.0
 
 ** TODO improve MELPA-package
-** TODO add conversion test-files and test results to repo
-** TODO add outorg-export to the repo 
+** DONE create new ert-buffer-report github repo
+   - State "DONE"       from "TODO"       [2014-09-21 So 13:16]
+** DONE add hint to outorg-export repo during loading
+   - State "DONE"       from "TODO"       [2014-09-21 So 13:15]
 ** TODO clean test file
 ** DONE update comment-section
    - State "DONE"       from "TODO"       [2014-09-20 Sa 14:39]
@@ -31,8 +33,10 @@
    - State "DONE"       from "TODO"       [2014-09-20 Sa 14:58]
 ** DONE set version number
    - State "DONE"       from "TODO"       [2014-09-20 Sa 14:57]
-** TODO announce in org-mode mailing-list
-** TODO announce in emacs-user mailing-list
+** DONE announce in org-mode mailing-list
+   - State "DONE"       from "TODO"       [2014-09-21 So 13:16]
+** DONE announce in emacs-user mailing-list
+   - State "DONE"       from "TODO"       [2014-09-21 So 13:16]
 
 
 * DONE Version 1.0
