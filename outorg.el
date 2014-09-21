@@ -988,7 +988,11 @@ the '\(********\)' line is left as-is."
   (newline)
   (let ((end-body (point))
         (start-body (point-min)))
-    (replace-string "^J" "\n" nil start-body end-body)
+    (save-excursion
+      (goto-char start-body)
+      (while (search-forward "^J" end-body t)
+	(replace-match "\n" nil t)))
+    ;; (replace-string "^J" "\n" nil start-body end-body)
     (goto-char (point-min))
     (re-search-forward
      (concat "(" (regexp-quote "********") ")") nil 'NOERROR)
@@ -1050,7 +1054,12 @@ buffer the '\(********\)' line is found again."
   (forward-char)
   (insert "\"")
   (kill-line)
-  (replace-string "\n" "^J" nil (point-min) (point))
+  (save-excursion
+    (let ((pt (point)))
+      (goto-char (point-min))
+      (while (search-forward "^J" pt t)
+	(replace-match "\n" nil t))))
+  ;; (replace-string "\n" "^J" nil (point-min) (point))
   (goto-char (point-min))
   (when (looking-at
          (concat "\\(^.*\\)"
