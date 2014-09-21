@@ -1108,13 +1108,18 @@ In `emacs-lisp-mode', transform one oldschool header (only semicolons) into an o
   "Copy code buffer content to tmp-buffer and convert it to Org syntax.
 If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
   the current subtree."
+  (when (buffer-live-p (get-buffer outorg-edit-buffer-name))
+    (if (y-or-n-p
+	 (format "%s exists - save and overwrite contents "
+		 outorg-edit-buffer-name))
+	(with-current-buffer outorg-edit-buffer-name
+	  (outorg-save-edits-to-tmp-file))
+      (user-error "Edit as Org cancelled.")))
   (let* ((edit-buffer
           (get-buffer-create outorg-edit-buffer-name)))
     (save-restriction
       (with-current-buffer edit-buffer
         (erase-buffer))
-      ;; make outorg respect narrowing
-      ;; (widen)
       ;; copy code buffer content
       (copy-to-buffer
        edit-buffer
@@ -1135,13 +1140,6 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
     (outorg-reinstall-markers-in-region (point-min))  
     ;; set point
     (goto-char outorg-edit-buffer-point-marker)
-    ;; (goto-char
-    ;;  (if outorg-edit-whole-buffer-p
-    ;;      (marker-position outorg-code-buffer-point-marker)
-    ;;    ;; FIXME=> use saved and restored markers instead
-    ;;    (1+ (- (marker-position outorg-code-buffer-point-marker)
-    ;;           (marker-position
-    ;; 	       outorg-code-buffer-beg-of-subtree-marker)))))
     ;; activate programming language major mode and convert to org
     (let ((mode (outorg-get-buffer-mode
                  (marker-buffer outorg-code-buffer-point-marker))))
