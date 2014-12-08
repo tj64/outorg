@@ -173,6 +173,10 @@
 	   backends:\n%s"
    "https://github.com/jleechpe/outorg-export"))
 
+(declare-function R-mode "ess-r-d")
+(declare-function org-watchdoc-propagate-changes "org-watchdoc")
+(declare-function org-watchdoc-set-md5 "org-watchdoc")
+
 ;;; Mode and Exporter Definitions
 ;;;; Outorg Edit minor-mode
 
