@@ -536,10 +536,23 @@ If MODE-NAME is nil, check if Org-Babel identifier of major-mode of current buff
                   (marker-buffer outorg-code-buffer-point-marker))
                  " ] "
                  "Exit with M-# (Meta-Key and #)")))
+
+    ;; Only run the kill-buffer-hooks when the outorg edit buffer is
+    ;; being killed. This is because temporary buffers may be created
+    ;; by various org commands, and when those buffers are killed, we
+    ;; do not want the outorg kill hooks to run.
     (org-add-hook 'kill-buffer-hook
-                  'outorg-save-edits-to-tmp-file nil 'local)
+                  (lambda ()
+                    (when (string= (buffer-name) outorg-edit-buffer-name)
+                      (outorg-save-edits-to-tmp-file)))
+                  nil 'local)
+    
     (org-add-hook 'kill-buffer-hook
-                  'outorg-reset-global-vars nil 'local)
+                  (lambda ()
+                    (when (string= (buffer-name) outorg-edit-buffer-name)
+                      (outorg-reset-global-vars)) nil 'local))
+
+    
     ;; (setq buffer-offer-save t)
     (and outorg-edit-buffer-persistent-message
          (org-set-local 'header-line-format msg))
