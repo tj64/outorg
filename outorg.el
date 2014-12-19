@@ -596,16 +596,14 @@ of `outorg-temporary-directory'."
 (defun outorg-save-edits-to-tmp-file ()
   "Save edit-buffer in temporary file"
   (interactive)
-  (let ((tmp-file
-         (outorg-temp-file
-          (file-name-sans-extension
-           (file-name-nondirectory
-            (buffer-name
-            ;; (buffer-file-name
-             (marker-buffer
-              outorg-code-buffer-point-marker)))))))
+  (let* ((code-file (file-name-sans-extension
+                     (file-name-nondirectory
+                      (buffer-name
+                       (marker-buffer
+                        outorg-code-buffer-point-marker)))))
+         (tmp-file (outorg-temp-file code-file)))
     (setq outorg-last-temp-file tmp-file)
-    (setq buffer-file-name tmp-file)
+    (setq buffer-file-name (concat "outorg-edit-" code-file))
     (write-region nil nil tmp-file nil 'VISIT)))
 
 ;; copied and adapted from ob-core.el
