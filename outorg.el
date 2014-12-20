@@ -601,9 +601,10 @@ of `outorg-temporary-directory'."
                       (buffer-name
                        (marker-buffer
                         outorg-code-buffer-point-marker)))))
-         (tmp-file (outorg-temp-file code-file)))
+         (tmp-file (outorg-temp-file code-file))
+         (tmp-dir (file-name-directory tmp-file)))
     (setq outorg-last-temp-file tmp-file)
-    (setq buffer-file-name (concat "outorg-edit-" code-file))
+    (setq buffer-file-name (concat tmp-dir "outorg-edit-" code-file))
     (write-region nil nil tmp-file nil 'VISIT)))
 
 ;; copied and adapted from ob-core.el
