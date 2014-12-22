@@ -536,10 +536,23 @@ If MODE-NAME is nil, check if Org-Babel identifier of major-mode of current buff
                   (marker-buffer outorg-code-buffer-point-marker))
                  " ] "
                  "Exit with M-# (Meta-Key and #)")))
+
+    ;; Only run the kill-buffer-hooks when the outorg edit buffer is
+    ;; being killed. This is because temporary buffers may be created
+    ;; by various org commands, and when those buffers are killed, we
+    ;; do not want the outorg kill hooks to run.
     (org-add-hook 'kill-buffer-hook
-                  'outorg-save-edits-to-tmp-file nil 'local)
+                  (lambda ()
+                    (when (string= (buffer-name) outorg-edit-buffer-name)
+                      (outorg-save-edits-to-tmp-file)))
+                  nil 'local)
+    
     (org-add-hook 'kill-buffer-hook
-                  'outorg-reset-global-vars nil 'local)
+                  (lambda ()
+                    (when (string= (buffer-name) outorg-edit-buffer-name)
+                      (outorg-reset-global-vars)) nil 'local))
+
+    
     ;; (setq buffer-offer-save t)
     (and outorg-edit-buffer-persistent-message
          (org-set-local 'header-line-format msg))
@@ -583,15 +596,15 @@ of `outorg-temporary-directory'."
 (defun outorg-save-edits-to-tmp-file ()
   "Save edit-buffer in temporary file"
   (interactive)
-  (let ((tmp-file
-         (outorg-temp-file
-          (file-name-sans-extension
-           (file-name-nondirectory
-            (buffer-name
-            ;; (buffer-file-name
-             (marker-buffer
-              outorg-code-buffer-point-marker)))))))
+  (let* ((code-file (file-name-sans-extension
+                     (file-name-nondirectory
+                      (buffer-name
+                       (marker-buffer
+                        outorg-code-buffer-point-marker)))))
+         (tmp-file (outorg-temp-file code-file))
+         (tmp-dir (file-name-directory tmp-file)))
     (setq outorg-last-temp-file tmp-file)
+    (setq buffer-file-name (concat tmp-dir "outorg-edit-" code-file))
     (write-region nil nil tmp-file nil 'VISIT)))
 
 ;; copied and adapted from ob-core.el
