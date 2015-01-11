@@ -541,7 +541,10 @@ If MODE-NAME is nil, check if Org-Babel identifier of major-mode of current buff
 			   "Mode-Name neither String nor Symbol"))))
 		 major-mode)))
     (assoc
-     (outorg-get-babel-name mmode)
+     ;; Note that babel's cpp (for C++) is packaged in ob-C with the C
+     ;; language
+     (let ((bname (outorg-get-babel-name mmode)))
+       (if (eq bname (intern "cpp")) (intern "C") bname))
      org-babel-load-languages)))
 
 
