@@ -1451,12 +1451,15 @@ Assume that edit-buffer major-mode has been set back to the
     (while (re-search-forward rgxp nil 'NOERROR)
       ;; special case 1st block
       (if first-block-p
-	  (progn
+          (progn
+            ;; Handle first block
 	    (move-marker outorg-pt-B-marker (match-beginning 0))
 	    (move-marker outorg-pt-C-marker (match-end 0))
-	    (save-match-data
-	      (ignore-errors
-		(comment-region (point-min) (match-beginning 0))))
+            (if (eq (point-min) (match-beginning 0))
+                (goto-char (match-end 0))
+              (save-match-data
+                (ignore-errors
+                  (comment-region (point-min) (match-beginning 0)))))
 	    (setq first-block-p nil))
 	;; default case
         (let ((previous-beg-src
@@ -1473,7 +1476,9 @@ Assume that edit-buffer major-mode has been set back to the
 	    (goto-char previous-end-src)
 	    (delete-region (1- (point-at-bol)) (point-at-eol))
 	    (goto-char previous-beg-src)
-	    (delete-region (1- (point-at-bol)) (point-at-eol))))))
+            (if (eq (point-at-bol) (point-min))
+                (delete-region 1 (1+ (point-at-eol)))
+              (delete-region (1- (point-at-bol)) (point-at-eol)))))))
     ;; special case last block
     (ignore-errors
       (comment-region
