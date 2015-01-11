@@ -1251,7 +1251,7 @@ block."
 next line and return `t'. Otherwise, leaves point alone and
 returns `nil'."
   (cond
-   ((looking-at "^[[:space:]]*$") (forward-line))
+   ((looking-at "[[:space:]]*$") (forward-line))
    ((outorg-comment-on-line-p) (forward-line))
    (t nil)))
 
@@ -1374,7 +1374,8 @@ space."
 		    ;; loop until C is at EOB
 		    ((< pt-B-pos pt-C-pos)
 		     (goto-char outorg-pt-C-marker))
-		    (t "This should not happen")))))
+		    (t "This should not happen"))))
+            (when (< pt-C-pos pt-B-pos) (goto-char (point-max))))
 	  ;; reset markers
 	  (move-marker outorg-pt-B-marker nil)
 	  (move-marker outorg-pt-C-marker nil)
