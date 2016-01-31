@@ -167,11 +167,11 @@
 (require 'outline)
 (require 'org)
 (require 'org-watchdoc nil t)
-;; (unless (require 'outorg-export nil t)
-;;   (message
-;;    "Try library `outorg-export' for automated export to all Org
-;; 	   backends:\n%s"
-;;    "https://github.com/jleechpe/outorg-export"))
+(unless (require 'outorg-export nil t)
+  (message
+   "Try library `outorg-export' for automated export to all Org
+	   backends:\n%s"
+   "https://github.com/jleechpe/outorg-export"))
 
 ;;; Mode and Exporter Definitions
 ;;;; Outorg Edit minor-mode
