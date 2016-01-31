@@ -167,11 +167,15 @@
 (require 'outline)
 (require 'org)
 (require 'org-watchdoc nil t)
-(unless (require 'outorg-export nil t)
-  (message
-   "Try library `outorg-export' for automated export to all Org
-	   backends:\n%s"
-   "https://github.com/jleechpe/outorg-export"))
+;; (unless (require 'outorg-export nil t)
+;;  (message
+;;   "Try library `outorg-export' for automated export to all Org
+;;	   backends:\n%s"
+;;   "https://github.com/jleechpe/outorg-export"))
+
+(declare-function R-mode "ess-r-d")
+(declare-function org-watchdoc-propagate-changes "org-watchdoc")
+(declare-function org-watchdoc-set-md5 "org-watchdoc")
 
 ;;; Mode and Exporter Definitions
 ;;;; Outorg Edit minor-mode
@@ -413,14 +417,34 @@ is removed before converting back from Org to source-code."
 ;;;; Non-interactive Functions
 ;;;;; Get Buffer Mode and Language Name
 
-;; copied from http://www.emacswiki.org/emacs/basic-edit-toolkit.el
+(defun outorg-comment-on-line ()
+  "Look forward from point for a comment at the start of this
+  line. If found, move point to the beginning of the text after
+  `comment-start' syntax, and return the location of the
+  beginning of the line. If the line does not start with
+  `comment-start', returns `nil'."
+  (and (search-forward-regexp (concat "\\("
+                                      (regexp-quote comment-start)
+                                      "[[:space:]]*\\)")
+                              (line-end-position)
+                              1)
+       (eq (match-beginning 0) (point-at-bol))
+       (point-at-bol)))
+
 (defun outorg-comment-on-line-p ()
-  "Whether have comment part on current line.
-If have comment return COMMENT-START, otherwise return nil."
+  "Determine if point is on a line that begins with a comment."
   (save-excursion
     (beginning-of-line)
-    (comment-normalize-vars)
-    (comment-search-forward (line-end-position) t)))
+    (outorg-comment-on-line)))
+
+(defun outorg-comment-search-forward ()
+  "Like `comment-search-forward', but looks only for comments
+beginning with `comment-start' syntax at the start of a
+line. Point is left at the beginning of the text after the line
+comment syntax, while the returned point is at the beginning of
+the line."
+  (while (not (or (eobp) (outorg-comment-on-line))) (forward-line))
+  (point-at-bol))
  
 ;; copied from http://www.emacswiki.org/emacs/basic-edit-toolkit.el
 (defun outorg-region-or-buffer-limits ()
@@ -517,7 +541,10 @@ If MODE-NAME is nil, check if Org-Babel identifier of major-mode of current buff
 			   "Mode-Name neither String nor Symbol"))))
 		 major-mode)))
     (assoc
-     (outorg-get-babel-name mmode)
+     ;; Note that babel's cpp (for C++) is packaged in ob-C with the C
+     ;; language
+     (let ((bname (outorg-get-babel-name mmode)))
+       (if (eq bname (intern "cpp")) (intern "C") bname))
      org-babel-load-languages)))
 
 
@@ -532,10 +559,23 @@ If MODE-NAME is nil, check if Org-Babel identifier of major-mode of current buff
                   (marker-buffer outorg-code-buffer-point-marker))
                  " ] "
                  "Exit with M-# (Meta-Key and #)")))
+
+    ;; Only run the kill-buffer-hooks when the outorg edit buffer is
+    ;; being killed. This is because temporary buffers may be created
+    ;; by various org commands, and when those buffers are killed, we
+    ;; do not want the outorg kill hooks to run.
     (org-add-hook 'kill-buffer-hook
-                  'outorg-save-edits-to-tmp-file nil 'local)
+                  (lambda ()
+                    (when (string= (buffer-name) outorg-edit-buffer-name)
+                      (outorg-save-edits-to-tmp-file)))
+                  nil 'local)
+    
     (org-add-hook 'kill-buffer-hook
-                  'outorg-reset-global-vars nil 'local)
+                  (lambda ()
+                    (when (string= (buffer-name) outorg-edit-buffer-name)
+                      (outorg-reset-global-vars)) nil 'local))
+
+    
     ;; (setq buffer-offer-save t)
     (and outorg-edit-buffer-persistent-message
          (org-set-local 'header-line-format msg))
@@ -579,15 +619,15 @@ of `outorg-temporary-directory'."
 (defun outorg-save-edits-to-tmp-file ()
   "Save edit-buffer in temporary file"
   (interactive)
-  (let ((tmp-file
-         (outorg-temp-file
-          (file-name-sans-extension
-           (file-name-nondirectory
-            (buffer-name
-            ;; (buffer-file-name
-             (marker-buffer
-              outorg-code-buffer-point-marker)))))))
+  (let* ((code-file (file-name-sans-extension
+                     (file-name-nondirectory
+                      (buffer-name
+                       (marker-buffer
+                        outorg-code-buffer-point-marker)))))
+         (tmp-file (outorg-temp-file code-file))
+         (tmp-dir (file-name-directory tmp-file)))
     (setq outorg-last-temp-file tmp-file)
+    (setq buffer-file-name (concat tmp-dir "outorg-edit-" code-file))
     (write-region nil nil tmp-file nil 'VISIT)))
 
 ;; copied and adapted from ob-core.el
@@ -1177,11 +1217,6 @@ If `outorg-edit-whole-buffer' is non-nil, copy the whole buffer, otherwise
     ;; reset buffer-undo-list
     (setq buffer-undo-list nil)))
 
-(defun outorg-comment-at-bol-p ()
-  "Non-nil if comment-on-line starts at `point-at-bol'.
-This function does not move point."
-  (eq (outorg-comment-on-line-p) (point-at-bol)))
-
 (defun outorg-wrap-source-in-block (lang &optional EXAMPLE-BLOCK-P)
   "Wrap code between in src-block of LANG.
 If EXAMPLE-BLOCK-P is non-nil, use an example-block instead of a
@@ -1207,6 +1242,37 @@ block."
 	 "#+end_example"
        "#+end_src"))))
 
+;; We treat nestable comments as code. This is the fourth field of the
+;; parser state vector: it is `t' if in a non-nestable comment, or the
+;; comment nesting level if inside a comment that can be nested.
+
+(defun skip-line-comment-or-ws ()
+  "If the current line is a comment or whitespace, move to the
+next line and return `t'. Otherwise, leaves point alone and
+returns `nil'."
+  (cond
+   ((looking-at "[[:space:]]*$") (forward-line))
+   ((outorg-comment-on-line-p) (forward-line))
+   (t nil)))
+
+;; Note: this behavior is slightly different than `forward-comment':
+;; it leaves point at the beginning of the line that is not a line
+;; comment or white space, not at the actual first character of code
+;; on the line.
+(defun forward-line-comments ()
+  "Move forward across comments. Stop scanning if we find
+something other than a comment or white space. Set point to where
+scanning stops."
+  (while (and (not (eobp)) (skip-line-comment-or-ws))))
+
+(defun backward-line-comments ()
+  "Move backward across comments. Stop scanning if we find
+something other than a comment or white space. Point is left at
+the end of the first line found to not be a line comment or white
+space."
+  (while (and (not (bobp)) (save-excursion (skip-line-comment-or-ws)) (forward-line -1)))
+  (end-of-line))
+
 (defun outorg-convert-to-org ()
   "Convert buffer content to Org Syntax"
   (let* ((buffer-mode
@@ -1216,6 +1282,7 @@ block."
 	 (example-block-p
 	  (not
 	   (outorg-in-babel-load-languages-p buffer-mode))))
+    
     (outorg-remove-trailing-blank-lines)
     ;; reset (left-over) markers
     (move-marker outorg-pt-A-marker nil)
@@ -1225,20 +1292,18 @@ block."
     (save-excursion
       (goto-char (point-min))
       ;; buffer begins with code
-      (unless (outorg-comment-at-bol-p)
+      (unless (outorg-comment-on-line-p)
 	;; mark beginning of code
 	(move-marker outorg-pt-B-marker
 		     (progn
-		       (forward-comment 1000)
+                       (forward-line-comments)
 		       (point))))
       ;; loop over rest of buffer
       (while (and (< (point) (point-max))
 		   ;; mark beginning of comment
 		  (marker-position
 		   (move-marker outorg-pt-A-marker
-				(progn
-				  (comment-search-forward
-				   (point-max) t)))))
+                                (outorg-comment-search-forward))))
 	(goto-char outorg-pt-A-marker)
 	;; comment does not start at BOL -> skip
 	;; looking at src-block delimiter -> skip
@@ -1250,37 +1315,33 @@ block."
 	  ;; comments starts at BOL -> convert
 	  (if (marker-position outorg-pt-B-marker)
 	      ;; special case buffer begins with code
-	      (move-marker outorg-pt-C-marker
-			   (progn
-			     (beginning-of-line)
-			     (forward-comment -1000)
-			     (point)))
+              (move-marker outorg-pt-C-marker
+                           (progn
+                             (beginning-of-line)
+                             (backward-line-comments)
+                             (point)))
 	    ;; default case buffer begins with comments
 	    ;; mark beginning of code
 	    (move-marker outorg-pt-B-marker
 			 ;; skip forward comments and whitespace
 			 (progn
-			   (forward-comment 1000)
+                           (forward-line-comments)
 			   (point)))
 	    ;; mark end of code
 	    (move-marker outorg-pt-C-marker
 			 ;; search next comment (starting at bol)
 			 (progn
-			   (while (and
-				   (< (point) (point-max))
-				   (not
-				    (eq (comment-search-forward
-					 (point-max) t)
-					(point-at-bol)))))
+                           (forward-line)
+                           (outorg-comment-search-forward)
 			   ;; move point to beg of comment
 			   (beginning-of-line)
 			   (unless (bobp)
 			     ;; skip backward comments and whitespace
-			     (forward-comment -1000)
+                             (backward-line-comments)
 			     ;; deal with trailing comment on line
 			     (unless (bobp)
 			       (end-of-line)))
-			     (point))))
+                           (point)))))
 	  ;; wrap code between B and C in block
 	  (when (< outorg-pt-B-marker outorg-pt-C-marker)
 	    (outorg-wrap-source-in-block
@@ -1313,11 +1374,12 @@ block."
 		    ;; loop until C is at EOB
 		    ((< pt-B-pos pt-C-pos)
 		     (goto-char outorg-pt-C-marker))
-		    (t "This should not happen")))))
+		    (t "This should not happen"))))
+            (when (< pt-C-pos pt-B-pos) (goto-char (point-max))))
 	  ;; reset markers
 	  (move-marker outorg-pt-B-marker nil)
 	  (move-marker outorg-pt-C-marker nil)
-	  (move-marker outorg-pt-A-marker nil))))))
+	  (move-marker outorg-pt-A-marker nil)))))
 
 (defun outorg-indent-active-source-blocks (mode-name)
   "Indent active source-blocks after conversion to Org.
@@ -1393,12 +1455,15 @@ Assume that edit-buffer major-mode has been set back to the
     (while (re-search-forward rgxp nil 'NOERROR)
       ;; special case 1st block
       (if first-block-p
-	  (progn
+          (progn
+            ;; Handle first block
 	    (move-marker outorg-pt-B-marker (match-beginning 0))
 	    (move-marker outorg-pt-C-marker (match-end 0))
-	    (save-match-data
-	      (ignore-errors
-		(comment-region (point-min) (match-beginning 0))))
+            (if (eq (point-min) (match-beginning 0))
+                (goto-char (match-end 0))
+              (save-match-data
+                (ignore-errors
+                  (comment-region (point-min) (match-beginning 0)))))
 	    (setq first-block-p nil))
 	;; default case
         (let ((previous-beg-src
@@ -1415,7 +1480,9 @@ Assume that edit-buffer major-mode has been set back to the
 	    (goto-char previous-end-src)
 	    (delete-region (1- (point-at-bol)) (point-at-eol))
 	    (goto-char previous-beg-src)
-	    (delete-region (1- (point-at-bol)) (point-at-eol))))))
+            (if (eq (point-at-bol) (point-min))
+                (delete-region 1 (1+ (point-at-eol)))
+              (delete-region (1- (point-at-bol)) (point-at-eol)))))))
     ;; special case last block
     (ignore-errors
       (comment-region
