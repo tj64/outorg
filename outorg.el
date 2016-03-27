@@ -1556,6 +1556,7 @@ Assume that edit-buffer major-mode has been set back to the
 ;;;; Commands
 ;;;;; Edit and Exit
 
+;;;###autoload
 (defun outorg-edit-as-org (&optional arg)
   "Convert and copy to temporary Org buffer
 
