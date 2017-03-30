@@ -1622,7 +1622,7 @@ With ARG, act conditional on the raw value of ARG:
          (setq outorg-keep-export-template-p t))
         ((equal arg 5)
          (setq outorg-propagate-changes-p t))))
-  (and outshine-enforce-no-comment-padding-p
+  (and (bound-and-true-p outshine-enforce-no-comment-padding-p)
        (setq outorg-oldschool-elisp-headers-p t))
   (setq outorg-initial-window-config
         (current-window-configuration))
